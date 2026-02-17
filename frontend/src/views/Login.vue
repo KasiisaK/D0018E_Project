@@ -98,7 +98,7 @@ export default {
 button {
   width: 100%;
   padding: 12px;
-  background-color: #8b5a2b;
+  background-color: #c71818;
   color: #fff;
   border: none;
   border-radius: 30px;
@@ -107,7 +107,7 @@ button {
   transition: background-color 0.3s;
 }
 button:hover:not(:disabled) {
-  background-color: #6b441e;
+  background-color: #2c3e50;
 }
 button:disabled {
   opacity: 0.6;

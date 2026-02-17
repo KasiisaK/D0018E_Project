@@ -476,3 +476,33 @@ body {
     justify-content: center;
   }
 }
+
+
+/* login */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.user-greeting {
+  font-weight: 500;
+  color: #4a4a4a;
+}
+.logout-btn {
+  background: none;
+  border: none;
+  color: #c71818;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.logout-btn:hover {
+  text-decoration: underline;
+}
+.nav-link {
+  text-decoration: none;
+  color: #4a4a4a;
+  font-weight: 500;
+}
+.nav-link:hover {
+  color: #c71818;
+}

@@ -2,7 +2,7 @@
   <div id="app" class="app-wrapper">
     <nav class="navbar">
       <div class="container">
-        <router-link to="/" class="logo">aeggaeega</router-link>
+        <router-link to="/" class="logo">bigMug</router-link>
         <div class="nav-links">
           <router-link to="/">Home</router-link>
           <router-link to="/products">Shop</router-link>
@@ -16,7 +16,6 @@
           </template>
           <template v-else>
             <router-link to="/login" class="nav-link">Login</router-link>
-            <router-link to="/signup" class="nav-link">Sign Up</router-link>
           </template>
           <div class="cart-icon">
             <i class="fas fa-shopping-cart"></i>
@@ -49,8 +48,8 @@ export default {
     const authStore = useAuthStore()
     const router = useRouter()
 
-    // Example cart count – replace with actual cart store
-    const cartCount = computed(() => 0) // placeholder
+    // cart count
+    const cartCount = computed(() => 2) // placeholder
 
     const logout = () => {
       authStore.logout()

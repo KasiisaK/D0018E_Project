@@ -13,7 +13,7 @@
     <section class="product-detail">
       <div class="container">
         <div class="product-detail-grid">
-          <!-- Left column: Images -->
+          <!-- left section: Images -->
           <div class="product-images">
             <div class="main-image">
               <!-- Show the active thumbnail or fallback to product.image -->
@@ -28,7 +28,7 @@
             </div>
           </div>
 
-          <!-- Right column: Product info -->
+          <!-- right section: Product info -->
           <div class="product-info">
             <h1 class="product-title">{{ product.name }}</h1>
             <p class="product-price-detail">${{ product.price.toFixed(2) }}</p>
@@ -97,7 +97,6 @@ export default {
   methods: {
     addToCart() {
       console.log(`Added ${this.quantity} x ${this.product.name} to cart`)
-      // You can later dispatch to a store
     }
   }
 }

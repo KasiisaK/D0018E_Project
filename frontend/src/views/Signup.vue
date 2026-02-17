@@ -64,7 +64,7 @@ export default {
         })
         const data = await response.json()
         if (response.ok) {
-          authStore.setAuth(data) // auto-login after signup
+          authStore.setAuth(data) // auto-login
           router.push('/')
         } else {
           error.value = data.message || 'Signup failed'
@@ -76,7 +76,7 @@ export default {
       }
     }
 
-    return { name, email, password, confirmPassword, loading, error, handleSignup }
+    return { name, email, password, confirmPassword, loading, error }
   }
 }
 </script>
@@ -116,7 +116,7 @@ export default {
 button {
   width: 100%;
   padding: 12px;
-  background-color: #8b5a2b;
+  background-color: #c71818;
   color: #fff;
   border: none;
   border-radius: 30px;
@@ -125,7 +125,7 @@ button {
   transition: background-color 0.3s;
 }
 button:hover:not(:disabled) {
-  background-color: #6b441e;
+  background-color: #2c3e50;
 }
 button:disabled {
   opacity: 0.6;
