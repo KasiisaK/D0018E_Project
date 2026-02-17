@@ -12,10 +12,10 @@
     <section class="products">
       <div class="container">
         <div class="product-grid">
-          <div v-for="product in products" :key="product.id" class="product-card" @click="goToProduct(product.id)">
-            <img :src="product.image" :alt="product.name" class="product-image">
+          <div v-for="product in products" :key="product.product_id" class="product-card" @click="goToProduct(product.product_id)">
+            <img :src="product.image_url" :alt="product.name" class="product-image">
             <h3 class="product-name">{{ product.name }}</h3>
-            <p class="product-price">${{ product.price.toFixed(2) }}</p>
+            <p class="product-price">${{ product.price}}</p>
             <button class="add-to-cart" @click.stop="addToCart(product)">Add to Cart</button>
           </div>
         </div>
@@ -25,21 +25,37 @@
 </template>
 
 <script>
-import { products } from '../data/products' // import the shared array
+// Dummy data for testing
+//import { products } from '../data/products'
+import axios from 'axios'
 
 export default {
-  name: 'Products',
   data() {
     return {
-      products: products // use it directly
+      products: []  // Initialize products as an empty array
     }
   },
+  async created() {
+    const response = await axios.get('http://127.0.0.1:5000/products');  // Load the data from your api url
+    this.products = response.data;  // set the data
+  },
   methods: {
-    goToProduct(id) {
-      this.$router.push(`/product/${id}`)
-    },
-    addToCart(product) {
-      console.log('Added to cart:', product)
+  goToProduct(id) {
+    this.$router.push(`/product/${id}`)
+  },
+  addToCart(product) {
+    axios.post('http://127.0.0.1:5000/cart/add', {
+      user_id: 1, // hardcoded for now
+      product_id: product.product_id,
+      quantity: 1
+    })
+    .then(response => {
+      console.log(response.data)
+      alert("added to cart")
+    })
+    .catch(error => {
+      console.error(error)
+    })
     }
   }
 }

@@ -17,10 +17,10 @@
           <div class="product-images">
             <div class="main-image">
               <!-- Show the active thumbnail or fallback to product.image -->
-              <img :src="product.thumbnails[activeThumb] || product.image" :alt="product.name">
+              <img :src="product.image_url || product.image_url" :alt="product.name">
             </div>
             <div class="thumbnail-images">
-              <img v-for="(thumb, index) in product.thumbnails" :key="index" 
+              <img v-for="(thumb, index) in product.image_url" :key="index" 
    
                   :src="thumb" alt="Thumbnail" class="thumbnail" 
                    :class="{ active: index === activeThumb }" 
@@ -31,12 +31,12 @@
           <!-- right section: Product info -->
           <div class="product-info">
             <h1 class="product-title">{{ product.name }}</h1>
-            <p class="product-price-detail">${{ product.price.toFixed(2) }}</p>
+            <p class="product-price-detail">${{ product.price}}</p>
             <div class="product-rating">
               <i v-for="star in fullStars" :key="'full'+star" class="fas fa-star"></i>
               <i v-if="hasHalfStar" class="fas fa-star-half-alt"></i>
               <i v-for="star in emptyStars" :key="'empty'+star" class="far fa-star"></i>
-              <span>({{ product.reviews }} reviews)</span>
+              <!--<span>({{ product.reviews }} reviews)</span> For later-->
             </div>
             <p class="product-description">{{ product.description }}</p>
 
