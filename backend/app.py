@@ -100,6 +100,7 @@ def remove_from_cart():
 # ADD PRODUCT TO CART
 # will check if the item already exists in the cart, 
 # if it does, it will update the quantity, otherwise it will insert a new record.
+# Also can't go past the stock quantity (set to max if)
 # -------------------------------
 @app.route('/cart/add', methods=['POST'])
 @cross_origin()
@@ -120,8 +121,23 @@ def add_to_cart():
 
     existing = cursor.fetchone()
 
+    # Get max stock for the product
+    cursor.execute("""
+        SELECT stock_quantity FROM products
+        WHERE product_id = %s
+    """, (product_id,))
+    max_stock = cursor.fetchone()
+
     if existing:
-        # Update quantity
+        # Adjust quantity to not exceed stock
+        current_quantity = existing[0]
+        print(f"Existing quantity in cart: {current_quantity}, requested quantity to add: {quantity}, max stock: {max_stock[0]}")
+        
+        new_quantity = current_quantity + quantity
+        if new_quantity > max_stock[0]:
+            quantity = max_stock[0] - current_quantity  
+
+        # Update quantity if not maxced out
         cursor.execute("""
             UPDATE cartitems
             SET quantity = quantity + %s
@@ -212,6 +228,11 @@ def delete_product(product_id):
     # First, we need to remove the product from any carts before deleting it from the products table
     cursor.execute("""
         DELETE FROM cartitems
+        WHERE product_id = %s
+    """, (product_id,))
+
+    cursor.execute("""
+        DELETE FROM orderitems
         WHERE product_id = %s
     """, (product_id,))
 
