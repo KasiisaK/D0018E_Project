@@ -14,8 +14,8 @@
       <div class="container">
         <h2 class="section-title">Our Best Sellers</h2>
         <div class="product-grid">
-          <div v-for="product in products" :key="product.id" class="product-card" @click="goToProduct(product.id)">
-            <img :src="product.image" :alt="product.name" class="product-image">
+          <div v-for="product in products" :key="product.product_id" class="product-card" @click="goToProduct(product.pr)">
+            <img :src="product.image_url" :alt="product.name" class="product-image">
             <h3 class="product-name">{{ product.name }}</h3>
             <p class="product-price">€ {{ product.price }}</p>
             <button class="add-to-cart" @click.stop="addToCart(product)">Add to Cart</button>
@@ -29,17 +29,17 @@
 <script>
 import { useCartStore } from '../stores/cart'   // <-- import the cart store
 import mug1 from '../assets/images/mug1.png'
+import axios from 'axios'
 
 export default {
   data() {
     return {
-      products: [
-        { id: 1, name: 'mugmug', price: 9.99, image: mug1 },
-        { id: 2, name: 'mug', price: 9.99, image: mug1 },
-        { id: 3, name: 'mug', price: 9.99, image: mug1 },
-        { id: 4, name: 'mug', price: 9.99, image: mug1 },
-      ]
+      products: []  // Initialize products as an empty array
     }
+  },
+  async created() {
+    const response = await axios.get('http://127.0.0.1:5000/products');  // Load the data from your api url
+    this.products = response.data;  // set the data
   },
   methods: {
     goToProduct(id) {
