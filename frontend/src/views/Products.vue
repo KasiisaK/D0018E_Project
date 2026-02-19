@@ -14,13 +14,13 @@
         <div class="product-grid">
           <div 
             v-for="product in products" 
-            :key="product.id" 
+            :key="product.product_id" 
             class="product-card" 
-            @click="goToProduct(product.id)"
+            @click="goToProduct(product.product_id)"
           >
-            <img :src="product.image" :alt="product.name" class="product-image">
+            <img :src="product.image_url" :alt="product.name" class="product-image">
             <h3 class="product-name">{{ product.name }}</h3>
-            <p class="product-price">${{ product.price.toFixed(2) }}</p>
+            <p class="product-price">${{ product.price}}</p>
             <!-- Add .stop to prevent the card's click event from firing -->
             <button class="add-to-cart" @click.stop="addToCart(product)">Add to Cart</button>
           </div>
@@ -31,29 +31,26 @@
 </template>
 
 <script>
-import { useCartStore } from '../stores/cart'
-import { products } from '../data/products'      // <-- import the shared product data
-import { useRouter } from 'vue-router'           // <-- for navigation
+import axios from 'axios'
 
 export default {
-  setup() {
-    const cartStore = useCartStore()
-    const router = useRouter()
-
-    const addToCart = (product) => {
-      cartStore.addToCart(product, 1)
-      // Optional: give feedback
+  data() {
+    return {
+      products: []  // Initialize products as an empty array
+    }
+  },
+  async created() {
+    const response = await axios.get('http://127.0.0.1:5000/products');  // Load the data from your api url
+    this.products = response.data;  // set the data
+  },
+  methods: {
+    goToProduct(id) {
+      this.$router.push(`/product/${id}`)
+    },
+    addToCart(product) {
+      const cartStore = useCartStore()          // <-- get the store instance
+      cartStore.addToCart(product, 1)            // add one item
       alert(`Added ${product.name} to cart!`)
-    }
-
-    const goToProduct = (id) => {
-      router.push(`/product/${id}`)
-    }
-
-    return { 
-      products,      // <-- make products available to the template
-      addToCart, 
-      goToProduct 
     }
   }
 }

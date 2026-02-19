@@ -27,8 +27,6 @@
 </template>
 
 <script>
-import { useCartStore } from '../stores/cart'   // <-- import the cart store
-import mug1 from '../assets/images/mug1.png'
 import axios from 'axios'
 
 export default {
