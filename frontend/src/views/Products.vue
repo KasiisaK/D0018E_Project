@@ -36,7 +36,7 @@ import axios from 'axios'
 export default {
   data() {
     return {
-      products: []  // Initialize products as an empty array
+      products: []  // Initialize products as an empty list
     }
   },
   async created() {
@@ -44,13 +44,15 @@ export default {
     this.products = response.data;  // set the data
   },
   methods: {
-    goToProduct(id) {
-      this.$router.push(`/product/${id}`)
-    },
     addToCart(product) {
-      const cartStore = useCartStore()          // <-- get the store instance
-      cartStore.addToCart(product, 1)            // add one item
-      alert(`Added ${product.name} to cart!`)
+      axios.post('http://127.0.0.1:5000/cart/add', {
+        user_id: 1, // hardcoded for now as use_id = 1
+        product_id: product.product_id,
+        quantity: 1
+      })
+      .catch(error => {
+        console.error(error)
+      })
     }
   }
 }

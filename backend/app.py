@@ -21,6 +21,8 @@
 #            "product_id": int,
 #            "quantity": int
 #        }
+# PUT    /cart/setQuantity
+#        Sets the quantity of a specific product in a user's shopping cart.
 #
 # GET    /cart/<user_id>
 #        Retrieves the contents of a specific user's cart,
@@ -131,7 +133,6 @@ def add_to_cart():
     if existing:
         # Adjust quantity to not exceed stock
         current_quantity = existing[0]
-        print(f"Existing quantity in cart: {current_quantity}, requested quantity to add: {quantity}, max stock: {max_stock[0]}")
         
         new_quantity = current_quantity + quantity
         if new_quantity > max_stock[0]:
@@ -156,6 +157,44 @@ def add_to_cart():
 
     return jsonify({"message": "Cart updated"}), 200
 
+# -------------------------------
+# SET ITEM QUANTITY
+# -------------------------------
+@app.route('/cart/setQuantity', methods=['PUT'])
+@cross_origin()
+def set_quantity():
+    data = request.json
+    user_id = data['user_id']
+    product_id = data['product_id']
+    quantity = data['quantity']
+
+    con = get_db_connection()
+    cursor = con.cursor()
+
+    # Get max stock for the product
+    cursor.execute("""
+        SELECT stock_quantity FROM products
+        WHERE product_id = %s
+    """, (product_id,))
+    max_stock = cursor.fetchone()
+
+    # If quantity exceeds max stock, set it to max stock
+    if quantity > max_stock[0]:
+        quantity = max_stock[0]
+
+    # Set quantity of a users cart item to a specific value (used for directly setting the quantity from the cart page)
+    cursor.execute("""
+        UPDATE cartitems
+        SET quantity = %s
+        WHERE user_id = %s AND product_id = %s
+    """, (quantity, user_id, product_id))
+
+    con.commit()
+    cursor.close()
+    con.close()
+
+    return jsonify({"message": "Quantity set"}), 200
+
 
 # -------------------------------
 # VIEW USER CART
@@ -167,8 +206,13 @@ def view_cart(user_id):
     cursor = con.cursor(dictionary=True)
 
     query = """
-    SELECT p.name, c.quantity, p.price,
-           (c.quantity * p.price) AS total
+    SELECT 
+        p.product_id,
+        p.name,
+        p.image_url,
+        c.quantity,
+        p.price,
+        (c.quantity * p.price) AS total
     FROM cartitems c
     JOIN products p ON c.product_id = p.product_id
     WHERE c.user_id = %s

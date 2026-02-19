@@ -6,11 +6,13 @@
 
     <h1 class="section-title">Your Cart</h1>
 
-    <div v-if="cartStore.items.length === 0" class="empty-cart">
+    <!-- EMPTY CART -->
+    <div v-if="cartItems.length === 0" class="empty-cart">
       <p>Your cart is empty.</p>
       <router-link to="/products" class="btn">Continue Shopping</router-link>
     </div>
 
+    <!-- CART CONTENT -->
     <div v-else class="cart-content">
       <table class="cart-table">
         <thead>
@@ -22,71 +24,141 @@
             <th></th>
           </tr>
         </thead>
+
         <tbody>
-          <tr v-for="item in cartStore.items" :key="item.id">
+          <tr v-for="item in cartItems" :key="item.product_id">
             <td class="product-info">
-              <img :src="item.image" :alt="item.name" class="cart-product-image">
+              <img
+                :src="item.image_url"
+                :alt="item.name"
+                class="cart-product-image"
+              >
               <span>{{ item.name }}</span>
             </td>
-            <td>${{ item.price.toFixed(2) }}</td>
+
+            <td>${{ Number(item.price).toFixed(2) }}</td>
+
             <td>
-              <input 
-                type="number" 
-                min="1" 
-                v-model.number="item.quantity" 
-                @change="updateQuantity(item.id, item.quantity)"
+              <input
+                type="number"
+                min="1"
+                v-model.number="item.quantity"
+                @change="setQuantity(item)"
                 class="quantity-input"
               >
             </td>
-            <td>${{ (item.price * item.quantity).toFixed(2) }}</td>
+
             <td>
-              <button @click="cartStore.removeFromCart(item.id)" class="remove-btn">✕</button>
+              ${{ (item.price * item.quantity).toFixed(2) }}
+            </td>
+
+            <td>
+              <button
+                @click="removeItem(item.product_id)"
+                class="remove-btn"
+              >
+                ✕
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
 
+      <!-- SUMMARY -->
       <div class="cart-summary">
         <h3>Order Summary</h3>
+
         <div class="summary-row">
-          <span>Subtotal ({{ cartStore.totalItems }} items)</span>
-          <span>${{ cartStore.totalPrice.toFixed(2) }}</span>
+          <span>Subtotal ({{ totalItems }} items)</span>
+          <span>${{ totalPrice.toFixed(2) }}</span>
         </div>
+
         <div class="summary-row">
           <span>Shipping</span>
           <span>Free</span>
         </div>
+
         <div class="summary-row total">
           <span>Total</span>
-          <span>${{ cartStore.totalPrice.toFixed(2) }}</span>
+          <span>${{ totalPrice.toFixed(2) }}</span>
         </div>
-        <button class="btn order-btn" @click="fakeOrder">Place Order</button>
-        <p class="fake-note">(fakah, no actual order will be placed)</p>
+
+        <button class="btn order-btn" @click="fakeOrder">
+          Place Order
+        </button>
+
+        <p class="fake-note">(fake, no actual order will be placed)</p>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { useCartStore } from '../stores/cart'
+import axios from "axios";
 
+
+/*
+Loads the cart at startup
+then methods: include updating quantity and removing items.
+*/
 export default {
-  setup() {
-    const cartStore = useCartStore()
+  data() {
+    return {
+      cartItems: [] // Initialize cartItems as an empty list
+    };
+  },
 
-    const updateQuantity = (id, newQty) => {
-      cartStore.updateQuantity(id, newQty)
+  async created() {
+    const response = await axios.get("http://127.0.0.1:5000/cart/1"); //Hardcoded user_id=1 for demo purposes
+    this.cartItems = response.data;  // set the data
+  },
+
+  // Dynamically calculate total items and total price based on cartItems
+  computed: {
+    totalItems() {
+      return this.cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    },
+
+    totalPrice() {
+      return this.cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     }
+  },
 
-    // can improve this if we want :/
-    const fakeOrder = () => {
-      alert('Order placed! (fake)')
+  // Methods to update quantity and remove items from the cart
+  methods: {
+    async setQuantity(item) {
+      try {
+        await axios.put("http://127.0.0.1:5000/cart/setQuantity", {
+          user_id: 1,
+          product_id: item.product_id,
+          quantity: item.quantity
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    },
+
+    async removeItem(productId) {
+      await axios.delete("http://127.0.0.1:5000/cart/remove", {
+        data: {
+          user_id: 1, //hardcoded for now as user_id = 1
+          product_id: productId
+        }
+      });
+
+      // Remove the item from the local cartItems list to update the UI
+      this.cartItems = this.cartItems.filter(
+        item => item.product_id !== productId
+      );
+    },
+
+    fakeOrder() {
+      alert("Order placed! (not really)");
     }
-
-    return { cartStore, updateQuantity, fakeOrder }
   }
-}
+};
 </script>
+
 
 <style scoped>
 .cart-table {
