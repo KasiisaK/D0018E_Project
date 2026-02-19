@@ -17,10 +17,10 @@
           <template v-else>
             <router-link to="/login" class="nav-link">Login</router-link>
           </template>
-          <div class="cart-icon">
+          <router-link to="/cart" class="cart-icon">
             <i class="fas fa-shopping-cart"></i>
-            <span class="cart-count">{{ cartCount }}</span>
-          </div>
+            <span class="cart-count">{{ cartStore.totalItems }}</span>
+          </router-link>
         </div>
       </div>
     </nav>
@@ -42,6 +42,7 @@
 import { useAuthStore } from './stores/auth'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useCartStore } from './stores/cart'
 
 export default {
   setup() {
@@ -49,14 +50,14 @@ export default {
     const router = useRouter()
 
     // cart count
-    const cartCount = computed(() => 2) // placeholder
+    const cartStore = useCartStore()
 
     const logout = () => {
       authStore.logout()
       router.push('/')
     }
 
-    return { authStore, cartCount, logout }
+    return { authStore, cartStore, logout }
   }
 }
 </script>

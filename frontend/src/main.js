@@ -7,6 +7,7 @@ import Home from './views/Home.vue'
 import About from './views/About.vue'
 import Products from './views/Products.vue'
 import ProductDetail from './views/ProductDetail.vue'
+import Cart from './views/Cart.vue'
 
 import Login from './views/Login.vue'      
 import Signup from './views/Signup.vue'    
@@ -16,6 +17,7 @@ const routes = [
     { path: '/about', component: About },
     { path: '/products', component: Products },
     { path: '/product/:id', component: ProductDetail },
+    { path: '/cart', component: Cart },
     // add contacts page 
 
     // authentication 

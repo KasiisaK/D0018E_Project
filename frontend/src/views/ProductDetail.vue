@@ -21,8 +21,7 @@
             </div>
             <div class="thumbnail-images">
               <img v-for="(thumb, index) in product.thumbnails" :key="index" 
-   
-                  :src="thumb" alt="Thumbnail" class="thumbnail" 
+                   :src="thumb" alt="Thumbnail" class="thumbnail" 
                    :class="{ active: index === activeThumb }" 
                    @click="activeThumb = index">
             </div>
@@ -69,14 +68,15 @@
 </template>
 
 <script>
-import { products } from '../data/products' // import the shared array
+import { products } from '../data/products'          // shared product data
+import { useCartStore } from '../stores/cart'       // <-- import the cart store
 
 export default {
   data() {
     return {
       activeThumb: 0,
       quantity: 1,
-      products: products // store it in data (or directly use the imported array in computed)
+      products: products
     }
   },
   computed: {
@@ -96,7 +96,21 @@ export default {
   },
   methods: {
     addToCart() {
-      console.log(`Added ${this.quantity} x ${this.product.name} to cart`)
+      const cartStore = useCartStore()               // get the store instance
+
+      // Prepare the product object that the cart expects
+      const productToAdd = {
+        id: this.product.id,
+        name: this.product.name,
+        price: this.product.price,
+        // Use the main image, or fallback to first thumbnail if needed
+        image: this.product.image || (this.product.thumbnails && this.product.thumbnails[0]) || 'https://via.placeholder.com/80'
+      }
+
+      cartStore.addToCart(productToAdd, this.quantity)
+
+      // Optional: give the user some feedback
+      alert(`Added ${this.quantity} × ${this.product.name} to cart!`)
     }
   }
 }

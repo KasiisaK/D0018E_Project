@@ -12,10 +12,16 @@
     <section class="products">
       <div class="container">
         <div class="product-grid">
-          <div v-for="product in products" :key="product.id" class="product-card" @click="goToProduct(product.id)">
+          <div 
+            v-for="product in products" 
+            :key="product.id" 
+            class="product-card" 
+            @click="goToProduct(product.id)"
+          >
             <img :src="product.image" :alt="product.name" class="product-image">
             <h3 class="product-name">{{ product.name }}</h3>
             <p class="product-price">${{ product.price.toFixed(2) }}</p>
+            <!-- Add .stop to prevent the card's click event from firing -->
             <button class="add-to-cart" @click.stop="addToCart(product)">Add to Cart</button>
           </div>
         </div>
@@ -25,21 +31,29 @@
 </template>
 
 <script>
-import { products } from '../data/products' // import the shared array
+import { useCartStore } from '../stores/cart'
+import { products } from '../data/products'      // <-- import the shared product data
+import { useRouter } from 'vue-router'           // <-- for navigation
 
 export default {
-  name: 'Products',
-  data() {
-    return {
-      products: products // use it directly
+  setup() {
+    const cartStore = useCartStore()
+    const router = useRouter()
+
+    const addToCart = (product) => {
+      cartStore.addToCart(product, 1)
+      // Optional: give feedback
+      alert(`Added ${product.name} to cart!`)
     }
-  },
-  methods: {
-    goToProduct(id) {
-      this.$router.push(`/product/${id}`)
-    },
-    addToCart(product) {
-      console.log('Added to cart:', product)
+
+    const goToProduct = (id) => {
+      router.push(`/product/${id}`)
+    }
+
+    return { 
+      products,      // <-- make products available to the template
+      addToCart, 
+      goToProduct 
     }
   }
 }

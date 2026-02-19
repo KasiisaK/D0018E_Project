@@ -27,6 +27,7 @@
 </template>
 
 <script>
+import { useCartStore } from '../stores/cart'   // <-- import the cart store
 import mug1 from '../assets/images/mug1.png'
 
 export default {
@@ -45,8 +46,9 @@ export default {
       this.$router.push(`/product/${id}`)
     },
     addToCart(product) {
-      // will implement later
-      console.log('Added to cart:', product)
+      const cartStore = useCartStore()          // <-- get the store instance
+      cartStore.addToCart(product, 1)            // add one item
+      alert(`Added ${product.name} to cart!`)
     }
   }
 }
