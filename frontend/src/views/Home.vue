@@ -46,7 +46,7 @@ export default {
       this.$router.push(`/product/${id}`)
     },
     addToCart(product) {
-      const cartStore = useCartStore()          // <-- get the store instance
+      const cartStore = useCartStore()            // <-- get the store instance
       cartStore.addToCart(product, 1)            // add one item
       alert(`Added ${product.name} to cart!`)
     }

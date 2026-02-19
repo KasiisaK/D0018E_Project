@@ -42,7 +42,6 @@ export default {
 
     const addToCart = (product) => {
       cartStore.addToCart(product, 1)
-      // Optional: give feedback
       alert(`Added ${product.name} to cart!`)
     }
 
