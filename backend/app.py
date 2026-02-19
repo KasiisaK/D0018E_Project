@@ -41,6 +41,8 @@
 # DELETE /admin/products/<product_id>
 #        Deletes a product from the store.
 
+# TODO: get max items, for use in max="" in cart later
+
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
