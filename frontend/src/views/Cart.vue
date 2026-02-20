@@ -42,6 +42,7 @@
               <input
                 type="number"
                 min="1"
+                :max="getMaxStock(item.product_id)"                 
                 v-model.number="item.quantity"
                 @change="setQuantity(item)"
                 class="quantity-input"
@@ -104,13 +105,16 @@ then methods: include updating quantity and removing items.
 export default {
   data() {
     return {
-      cartItems: [] // Initialize cartItems as an empty list
+      cartItems: [], // Initialize cartItems as an empty list
+      products: []
     };
   },
 
   async created() {
     const response = await axios.get("http://127.0.0.1:5000/cart/1"); //Hardcoded user_id=1 for demo purposes
     this.cartItems = response.data;  // set the data
+    const response2 = await axios.get("http://127.0.0.1:5000/products");
+    this.products = response2.data;
   },
 
   // Dynamically calculate total items and total price based on cartItems
@@ -150,6 +154,12 @@ export default {
       this.cartItems = this.cartItems.filter(
         item => item.product_id !== productId
       );
+    },
+
+    // Helper method to get the maximum stock quantity for a product (used in "max" in the quantity input)
+    getMaxStock(product_id) {
+      const product = this.products.find(p => p.product_id === product_id);
+      return product ? product.stock_quantity : 1;
     },
 
     fakeOrder() {
