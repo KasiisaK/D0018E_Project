@@ -49,7 +49,7 @@ export default {
     const authStore = useAuthStore()
     const router = useRouter()
 
-    // cart count
+    // cart count fix this!!
     const cartStore = useCartStore()
 
     const logout = () => {
