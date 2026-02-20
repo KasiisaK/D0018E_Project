@@ -106,7 +106,7 @@ export default {
   data() {
     return {
       cartItems: [], // Initialize cartItems as an empty list
-      products: []
+      products: [] // Get products for max_quantity in the quantity input
     };
   },
 
