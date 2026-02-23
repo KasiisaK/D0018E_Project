@@ -37,6 +37,9 @@
 # GET    /orders/get/<order_id>
 #        Retrieves the details of a specific order.
 #
+# GET    /orders/purchased-products/<user_id>
+#        Retrieves a list of all products that a user has purchased (Used when flagging if a user is eligible for commenting on products).
+#
 #
 # ADMIN ENDPOINTS:
 # POST   /admin/products/add
@@ -303,7 +306,7 @@ def create_order():
 
 
 # -------------------------------
-# View USER ORDER
+# VIEW USER ORDER
 # -------------------------------
 @app.route('/orders/get/<int:order_id>', methods=['GET'])
 @cross_origin()
@@ -327,6 +330,34 @@ def get_order_details(order_id):
 
     return jsonify(items)
 
+# -------------------------------
+# GET ALL ORDERS FROM USER
+# -------------------------------
+@app.route('/orders/purchased-products/<int:user_id>', methods=['GET'])
+@cross_origin()
+def get_purchased_products(user_id):
+    con = get_db_connection()
+    cursor = con.cursor(dictionary=True)
+
+    # Use JOIN to get products and DISTINCT to only get each product once
+    cursor.execute("""
+        SELECT DISTINCT 
+            p.product_id,
+            p.name,
+            p.price,
+            p.image_url
+        FROM orders o
+        JOIN orderitems oi ON o.order_id = oi.order_id
+        JOIN products p ON oi.product_id = p.product_id
+        WHERE o.user_id = %s
+    """, (user_id,))
+
+    products = cursor.fetchall()
+
+    cursor.close()
+    con.close()
+
+    return jsonify(products)
 
 
 # ===============================
