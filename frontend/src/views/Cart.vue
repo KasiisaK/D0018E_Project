@@ -7,7 +7,7 @@
     <h1 class="section-title">Your Cart</h1>
 
     <!-- EMPTY CART -->
-    <div v-if="cartItems.length === 0" class="empty-cart">
+    <div v-if="cartStore.items.length === 0" class="empty-cart">
       <p>Your cart is empty.</p>
       <router-link to="/products" class="btn">Continue Shopping</router-link>
     </div>
@@ -26,7 +26,7 @@
         </thead>
 
         <tbody>
-          <tr v-for="item in cartItems" :key="item.product_id">
+          <tr v-for="item in cartStore.items" :key="item.product_id">
             <td class="product-info">
               <img
                 :src="item.image_url"
@@ -41,10 +41,9 @@
             <td>
               <input
                 type="number"
-                min="1"
-                :max="getMaxStock(item.product_id)"                 
+                min="1"               
                 v-model.number="item.quantity"
-                @change="setQuantity(item)"
+                @change="cartStore.updateQuantity(item.product_id, item.quantity)"
                 class="quantity-input"
               >
             </td>
@@ -55,7 +54,7 @@
 
             <td>
               <button
-                @click="removeItem(item.product_id)"
+                @click="cartStore.removeItem(item.product_id)"
                 class="remove-btn"
               >
                 ✕
@@ -70,8 +69,8 @@
         <h3>Order Summary</h3>
 
         <div class="summary-row">
-          <span>Subtotal ({{ totalItems }} items)</span>
-          <span>${{ totalPrice.toFixed(2) }}</span>
+          <span>Subtotal ({{ cartStore.totalItems }} items)</span>
+          <span>${{ cartStore.totalPrice.toFixed(2) }}</span>
         </div>
 
         <div class="summary-row">
@@ -81,7 +80,7 @@
 
         <div class="summary-row total">
           <span>Total</span>
-          <span>${{ totalPrice.toFixed(2) }}</span>
+          <span>${{ cartStore.totalPrice.toFixed(2) }}</span>
         </div>
 
         <button class="btn order-btn" @click="fakeOrder">
@@ -95,78 +94,24 @@
 </template>
 
 <script>
-import axios from "axios";
+import { useCartStore } from '../stores/cart'
 
-
-/*
-Loads the cart at startup
-then methods: include updating quantity and removing items.
-*/
 export default {
-  data() {
-    return {
-      cartItems: [], // Initialize cartItems as an empty list
-      products: [] // Get products for max_quantity in the quantity input
-    };
+  setup() {
+    const cartStore = useCartStore()
+
+    cartStore.fetchCart(1)
+
+    return { cartStore }
   },
 
-  async created() {
-    const response = await axios.get("http://127.0.0.1:5000/cart/1"); //Hardcoded user_id=1 for demo purposes
-    this.cartItems = response.data;  // set the data
-    const response2 = await axios.get("http://127.0.0.1:5000/products");
-    this.products = response2.data;
-  },
-
-  // Dynamically calculate total items and total price based on cartItems
-  computed: {
-    totalItems() {
-      return this.cartItems.reduce((sum, item) => sum + item.quantity, 0);
-    },
-
-    totalPrice() {
-      return this.cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    }
-  },
-
-  // Methods to update quantity and remove items from the cart
   methods: {
-    async setQuantity(item) {
-      try {
-        await axios.put("http://127.0.0.1:5000/cart/setQuantity", {
-          user_id: 1,
-          product_id: item.product_id,
-          quantity: item.quantity
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    },
-
-    async removeItem(productId) {
-      await axios.delete("http://127.0.0.1:5000/cart/remove", {
-        data: {
-          user_id: 1, //hardcoded for now as user_id = 1
-          product_id: productId
-        }
-      });
-
-      // Remove the item from the local cartItems list to update the UI
-      this.cartItems = this.cartItems.filter(
-        item => item.product_id !== productId
-      );
-    },
-
-    // Helper method to get the maximum stock quantity for a product (used in "max" in the quantity input)
-    getMaxStock(product_id) {
-      const product = this.products.find(p => p.product_id === product_id);
-      return product ? product.stock_quantity : 1;
-    },
-
     fakeOrder() {
-      alert("Order placed! (not really)");
+      alert('This is a demo order. No actual purchase was made.')
     }
   }
-};
+
+}
 </script>
 
 

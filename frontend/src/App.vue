@@ -10,16 +10,16 @@
           <a href="#">Contact</a>
         </div>
         <div class="nav-right">
-          <template v-if="authStore.isAuthenticated">
+          <!--<template v-if="authStore.isAuthenticated">         Cooment out for now, we don't have auth yet
             <span class="user-greeting">Hi, {{ authStore.user?.name }}</span>
             <button @click="logout" class="logout-btn">Logout</button>
           </template>
           <template v-else>
             <router-link to="/login" class="nav-link">Login</router-link>
-          </template>
+          </template>-->
           <router-link to="/cart" class="cart-icon">
             <i class="fas fa-shopping-cart"></i>
-            <span class="cart-count">{{ cartStore.totalItems }}</span>
+            <span class="cart-count">{{ cartStore.totalTypes }}</span>
           </router-link>
         </div>
       </div>
@@ -39,25 +39,16 @@
 </template>
 
 <script>
-import { useAuthStore } from './stores/auth'
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useCartStore } from './stores/cart'
 
 export default {
   setup() {
-    const authStore = useAuthStore()
-    const router = useRouter()
-
-    // cart count fix this!!
     const cartStore = useCartStore()
 
-    const logout = () => {
-      authStore.logout()
-      router.push('/')
-    }
+    // load cart once when app starts
+    cartStore.fetchCart(1)
 
-    return { authStore, cartStore, logout }
+    return { cartStore }
   }
 }
 </script>

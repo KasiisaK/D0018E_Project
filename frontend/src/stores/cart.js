@@ -1,59 +1,69 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import axios from 'axios'
+
+
+// TODO: add userId param to all functions and call with authStore.user.id once we have auth working. For now we hardcode userId=1
 
 export const useCartStore = defineStore('cart', () => {
-  // state
   const items = ref([])
 
-  // getters
-  const totalItems = computed(() => 
+  // ===== LOAD CART FROM BACKEND =====
+  async function fetchCart(userId = 1) {
+    const response = await axios.get(`http://127.0.0.1:5000/cart/${userId}`)
+    items.value = response.data
+  }
+
+  // ===== ADD ITEM =====
+  async function addToCart(productId, quantity = 1, userId = 1) {
+    await axios.post('http://127.0.0.1:5000/cart/add', {
+      user_id: userId,
+      product_id: productId,
+      quantity
+    })
+
+    await fetchCart(userId) // refresh local state
+  }
+
+  // ===== UPDATE QUANTITY =====
+  async function updateQuantity(productId, quantity, userId = 1) {
+    await axios.put('http://127.0.0.1:5000/cart/setQuantity', {
+      user_id: userId,
+      product_id: productId,
+      quantity
+    })
+
+    await fetchCart(userId)
+  }
+
+  // ===== REMOVE =====
+  async function removeItem(productId, userId = 1) {
+    await axios.delete('http://127.0.0.1:5000/cart/remove', {
+      data: { user_id: userId, product_id: productId }
+    })
+
+    await fetchCart(userId)
+  }
+
+  // ===== GETTERS =====
+  const totalItems = computed(() =>
     items.value.reduce((sum, item) => sum + item.quantity, 0)
   )
 
-  const totalPrice = computed(() => 
-    items.value.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  const totalTypes = computed(() => items.value.length)
+
+  const totalPrice = computed(() =>
+    items.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
   )
-
-  // actions
-  function addToCart(product, quantity = 1) {
-    const existing = items.value.find(item => item.id === product.id)
-    if (existing) {
-      existing.quantity += quantity
-    } else {
-      items.value.push({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image || 'smth here',
-        quantity
-      })
-    }
-  }
-
-  function removeFromCart(productId) {
-    items.value = items.value.filter(item => item.id !== productId)
-  }
-
-  function updateQuantity(productId, newQuantity) {
-    const item = items.value.find(item => item.id === productId)
-    if (item && newQuantity > 0) {
-      item.quantity = newQuantity
-    } else if (item && newQuantity <= 0) {
-      removeFromCart(productId)
-    }
-  }
-
-  function clearCart() {
-    items.value = []
-  }
 
   return {
     items,
     totalItems,
+    totalTypes,
     totalPrice,
+    fetchCart,
     addToCart,
-    removeFromCart,
     updateQuantity,
-    clearCart
+    removeItem
   }
 })

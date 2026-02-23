@@ -32,28 +32,24 @@
 
 <script>
 import axios from 'axios'
+import { useCartStore } from '../stores/cart'
+import { ref, onMounted } from 'vue'
 
 export default {
-  data() {
-    return {
-      products: []  // Initialize products as an empty list
+  setup() {
+    const cartStore = useCartStore()
+    const products = ref([])
+
+    onMounted(async () => {
+      const response = await axios.get('http://127.0.0.1:5000/products')
+      products.value = response.data
+    })
+
+    function addToCart(product) {
+      cartStore.addToCart(product.product_id, 1)
     }
-  },
-  async created() {
-    const response = await axios.get('http://127.0.0.1:5000/products');  // Load the data from your api url
-    this.products = response.data;  // set the data
-  },
-  methods: {
-    addToCart(product) {
-      axios.post('http://127.0.0.1:5000/cart/add', {
-        user_id: 1, // hardcoded for now as use_id = 1
-        product_id: product.product_id,
-        quantity: 1
-      })
-      .catch(error => {
-        console.error(error)
-      })
-    }
+
+    return { products, addToCart }
   }
 }
 </script>
