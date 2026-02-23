@@ -45,6 +45,16 @@ export const useCartStore = defineStore('cart', () => {
     await fetchCart(userId)
   }
 
+  // ===== MAKE ORDER =====
+  async function createOrder(userId = 1) {
+    const response = await axios.post('http://127.0.0.1:5000/orders/create', {
+      user_id: userId
+    })
+
+    await fetchCart(userId)
+    return response.data.order_id
+  }
+
   // ===== GETTERS =====
   const totalItems = computed(() =>
     items.value.reduce((sum, item) => sum + item.quantity, 0)
@@ -64,6 +74,7 @@ export const useCartStore = defineStore('cart', () => {
     fetchCart,
     addToCart,
     updateQuantity,
-    removeItem
+    removeItem,
+    createOrder
   }
 })

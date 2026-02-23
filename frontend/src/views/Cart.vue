@@ -107,7 +107,7 @@ export default {
 
   methods: {
     fakeOrder() {
-      alert('This is a demo order. No actual purchase was made.')
+      this.cartStore.createOrder(1)
     }
   }
 

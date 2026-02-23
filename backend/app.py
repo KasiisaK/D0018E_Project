@@ -27,6 +27,17 @@
 # GET    /cart/<user_id>
 #        Retrieves the contents of a specific user's cart,
 #
+# POST   /orders/create
+#        Creates an order from the items in a user's cart.
+#        Request body (JSON):
+#        {
+#            "user_id": int
+#        }
+#
+# GET    /orders/get/<order_id>
+#        Retrieves the details of a specific order.
+#
+#
 # ADMIN ENDPOINTS:
 # POST   /admin/products/add
 #        Adds a new product to the store.
@@ -227,6 +238,95 @@ def view_cart(user_id):
     con.close()
 
     return jsonify(cart)
+
+
+# -------------------------------
+# CREATE ORDER FROM CART
+# -------------------------------
+@app.route('/orders/create', methods=['POST'])
+@cross_origin()
+def create_order():
+    data = request.json
+    user_id = data['user_id']
+
+    con = get_db_connection()
+    cursor = con.cursor(dictionary=True)
+
+    # Get user_id's cart items
+    cursor.execute("""
+        SELECT c.product_id, c.quantity, p.price
+        FROM cartitems c
+        JOIN products p ON c.product_id = p.product_id
+        WHERE c.user_id = %s
+    """, (user_id,))
+    
+    cart_items = cursor.fetchall()
+
+    # Chack if bad request (cart is empty)
+    if not cart_items:
+        return jsonify({"message": "Cart is empty"}), 400
+
+    # Create order (use Pending (forever), since no payment or delivery)
+    cursor.execute("""
+        INSERT INTO orders (user_id, order_date, status)
+        VALUES (%s, NOW(), 'Pending')
+    """, (user_id,))
+    
+    order_id = cursor.lastrowid # Returns ^ INSERT
+
+    # Insert order items from cart
+    for item in cart_items:
+        cursor.execute("""
+            INSERT INTO orderitems 
+            (order_id, product_id, quantity, price_at_purchase)
+            VALUES (%s, %s, %s, %s)
+        """, (
+            order_id,
+            item['product_id'],
+            item['quantity'],
+            item['price']
+        ))
+
+    # Clear cart
+    cursor.execute("""
+        DELETE FROM cartitems WHERE user_id = %s
+    """, (user_id,))
+
+    con.commit()
+    cursor.close()
+    con.close()
+
+    return jsonify({
+        "message": "Order created",
+        "order_id": order_id
+    }), 201
+
+
+# -------------------------------
+# View USER ORDER
+# -------------------------------
+@app.route('/orders/get/<int:order_id>', methods=['GET'])
+@cross_origin()
+def get_order_details(order_id):
+    con = get_db_connection()
+    cursor = con.cursor(dictionary=True)
+
+    # Use JOIN to do everything in one query
+    cursor.execute("""
+        SELECT p.name, oi.quantity, oi.price_at_purchase,
+               (oi.quantity * oi.price_at_purchase) AS total
+        FROM orderitems oi
+        JOIN products p ON oi.product_id = p.product_id
+        WHERE oi.order_id = %s
+    """, (order_id,))
+
+    items = cursor.fetchall()
+
+    cursor.close()
+    con.close()
+
+    return jsonify(items)
+
 
 
 # ===============================
