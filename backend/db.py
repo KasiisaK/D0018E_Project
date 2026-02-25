@@ -1,12 +1,21 @@
-# Used for connecting to a databse, in seperat file so that you would have the option to .gitignroe it.
+# Get databse connection.
+# Uses os.getenv to read from a .env file for security. Or env when deplying with AWS.
 
 import mysql.connector
+import os
+from mysql.connector import Error
 
 def get_db_connection():
-    connection = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="MySQL_Pass654321",
-        database="database"
-    )
-    return connection
+    try:
+        connection = mysql.connector.connect(
+            host     = os.getenv("DB_HOST"),
+            user     = os.getenv("DB_USER"),
+            password = os.getenv("DB_PASSWORD"),
+            database = os.getenv("DB_NAME"),
+            connect_timeout = 10
+        )
+        print("Database connection successful")
+        return connection
+    except Error as e:
+        print(f"Database connection failed: {e}")
+        raise  # makes Flask return a 500 error

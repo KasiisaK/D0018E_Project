@@ -20,7 +20,7 @@
           >
             <img :src="product.image_url" :alt="product.name" class="product-image">
             <h3 class="product-name">{{ product.name }}</h3>
-            <p class="product-price">${{ product.price}}</p>
+            <p class="product-price">€ {{ product.price}}</p>
             <!-- Add .stop to prevent the card's click event from firing -->
             <button class="add-to-cart" @click.stop="addToCart(product)">Add to Cart</button>
           </div>
@@ -34,6 +34,7 @@
 import axios from 'axios'
 import { useCartStore } from '../stores/cart'
 import { ref, onMounted } from 'vue'
+import api from '../api/index'
 
 export default {
   setup() {
@@ -41,12 +42,16 @@ export default {
     const products = ref([])
 
     onMounted(async () => {
-      const response = await axios.get('http://127.0.0.1:5000/products')
+      const response = await api.get('/products')
       products.value = response.data
     })
 
     function addToCart(product) {
       cartStore.addToCart(product.product_id, 1)
+    }
+
+    function goToProduct(id) {
+      this.$router.push(`/product/${id}`);
     }
 
     return { products, addToCart }

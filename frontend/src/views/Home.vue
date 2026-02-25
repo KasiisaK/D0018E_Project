@@ -14,7 +14,7 @@
       <div class="container">
         <h2 class="section-title">Our Best Sellers</h2>
         <div class="product-grid">
-          <div v-for="product in products" :key="product.product_id" class="product-card" @click="goToProduct(product.pr)">
+          <div v-for="product in products" :key="product.product_id" class="product-card" @click="goToProduct(product.product_id)">
             <img :src="product.image_url" :alt="product.name" class="product-image">
             <h3 class="product-name">{{ product.name }}</h3>
             <p class="product-price">€ {{ product.price }}</p>
@@ -30,6 +30,7 @@
 import axios from 'axios'
 import { useCartStore } from '../stores/cart'
 import { ref, onMounted } from 'vue'
+import api from '../api/index'
 
 export default {
   setup() {
@@ -37,7 +38,7 @@ export default {
     const products = ref([])
 
     onMounted(async () => {
-      const response = await axios.get('http://127.0.0.1:5000/products')
+      const response = await api.get('/products')
       products.value = response.data
     })
 
@@ -45,7 +46,11 @@ export default {
       cartStore.addToCart(product.product_id, 1)
     }
 
-    return { products, addToCart }
+    function goToProduct(id) {
+      this.$router.push(`/product/${id}`);
+    }
+
+    return { products, addToCart, goToProduct}
   }
 }
 </script>

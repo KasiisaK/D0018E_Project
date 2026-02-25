@@ -55,16 +55,18 @@
 # DELETE /admin/products/<product_id>
 #        Deletes a product from the store.
 
-# TODO: get max items, for use in max="" in cart later
+# only for local testing
+#from dotenv import load_dotenv
+#load_dotenv() 
 
-
-from flask import Flask, jsonify, request
+import os
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS, cross_origin
 from db import get_db_connection
 
-app = Flask(__name__)
-cors = CORS(app) # allow CORS for all domains on all routes.
-app.config['CORS_HEADERS'] = 'Content-Type'
+application = Flask(__name__)
+cors = CORS(application) # allow CORS for all domains on all routes.
+application.config['CORS_HEADERS'] = 'Content-Type'
 
 # ===============================
 # Customer Endpoints
@@ -73,25 +75,36 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 # -------------------------------
 # GET PRODUCTS
 # -------------------------------
-@app.route('/products', methods=['GET'])
+@application.route('/products', methods=['GET'])
 @cross_origin()
 def get_products():
-    print("Received request to get products")
-    con = get_db_connection()
-    cursor = con.cursor(dictionary=True)
-
-    cursor.execute("SELECT * FROM products")
-    products = cursor.fetchall()
-
-    cursor.close()
-    con.close()
-
-    return jsonify(products)
+    print("=== DEBUG: /products endpoint called ===")
+    try:
+        con = get_db_connection()
+        print("DEBUG: DB connection successful")
+        
+        cursor = con.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM products")
+        products = cursor.fetchall()
+        
+        print(f"DEBUG: Found {len(products)} products")
+        if products:
+            print("DEBUG: First product sample:", products[0])
+        
+        cursor.close()
+        con.close()
+        return jsonify(products)
+        
+    except Exception as e:
+        print(f"ERROR in /products: {type(e).__name__}: {str(e)}")
+        import traceback
+        print(traceback.format_exc())   # full stack trace
+        return jsonify({"error": "Database error", "message": str(e)}), 500
 
 # -------------------------------
 # REMOVE ITEM FROM CART
 # -------------------------------
-@app.route('/cart/remove', methods=['DELETE'])
+@application.route('/cart/remove', methods=['DELETE'])
 @cross_origin()
 def remove_from_cart():
     data = request.json
@@ -120,7 +133,7 @@ def remove_from_cart():
 # if it does, it will update the quantity, otherwise it will insert a new record.
 # Also can't go past the stock quantity (set to max if)
 # -------------------------------
-@app.route('/cart/add', methods=['POST'])
+@application.route('/cart/add', methods=['POST'])
 @cross_origin()
 def add_to_cart():
     data = request.json
@@ -176,7 +189,7 @@ def add_to_cart():
 # -------------------------------
 # SET ITEM QUANTITY
 # -------------------------------
-@app.route('/cart/setQuantity', methods=['PUT'])
+@application.route('/cart/setQuantity', methods=['PUT'])
 @cross_origin()
 def set_quantity():
     data = request.json
@@ -215,7 +228,7 @@ def set_quantity():
 # -------------------------------
 # VIEW USER CART
 # -------------------------------
-@app.route('/cart/<int:user_id>', methods=['GET'])
+@application.route('/cart/<int:user_id>', methods=['GET'])
 @cross_origin()
 def view_cart(user_id):
     con = get_db_connection()
@@ -246,7 +259,7 @@ def view_cart(user_id):
 # -------------------------------
 # CREATE ORDER FROM CART
 # -------------------------------
-@app.route('/orders/create', methods=['POST'])
+@application.route('/orders/create', methods=['POST'])
 @cross_origin()
 def create_order():
     data = request.json
@@ -308,7 +321,7 @@ def create_order():
 # -------------------------------
 # VIEW USER ORDER
 # -------------------------------
-@app.route('/orders/get/<int:order_id>', methods=['GET'])
+@application.route('/orders/get/<int:order_id>', methods=['GET'])
 @cross_origin()
 def get_order_details(order_id):
     con = get_db_connection()
@@ -333,7 +346,7 @@ def get_order_details(order_id):
 # -------------------------------
 # GET ALL ORDERS FROM USER
 # -------------------------------
-@app.route('/orders/purchased-products/<int:user_id>', methods=['GET'])
+@application.route('/orders/purchased-products/<int:user_id>', methods=['GET'])
 @cross_origin()
 def get_purchased_products(user_id):
     con = get_db_connection()
@@ -367,7 +380,7 @@ def get_purchased_products(user_id):
 # -------------------------------
 # ADD PRODUCT
 # -------------------------------
-@app.route('/admin/products/add', methods=['POST'])
+@application.route('/admin/products/add', methods=['POST'])
 @cross_origin()
 def add_product():
     data = request.json
@@ -396,7 +409,7 @@ def add_product():
 # -------------------------------
 # DELETE PRODUCT
 # -------------------------------
-@app.route('/admin/products/<int:product_id>', methods=['DELETE'])
+@application.route('/admin/products/<int:product_id>', methods=['DELETE'])
 @cross_origin()
 def delete_product(product_id):
     con = get_db_connection()
@@ -424,6 +437,16 @@ def delete_product(product_id):
 
     return jsonify({"message": "Product deleted"}), 200
 
-# Keep at the boottom of the file
+
+
+# Serve Vue frontend (SPA routing)
+@application.route('/', defaults={'path': ''})
+@application.route('/<path:path>')
+def serve_vue(path):
+    if path != "" and os.path.exists(os.path.join(application.static_folder, path)):
+        return send_from_directory(application.static_folder, path)
+    else:
+        return send_from_directory(application.static_folder, 'index.html')
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    application.run()  # this line is only for local testing
