@@ -5,6 +5,9 @@
 # GET    /products
 #        Retrieves a list of all available products.
 #
+# GET    /product/<product_id>
+#        Retrieves details of a specific product by its ID.
+#
 # DELETE /cart/remove
 #        Removes a product from a user's shopping cart.
 #        Request body (JSON):
@@ -55,9 +58,7 @@
 # DELETE /admin/products/<product_id>
 #        Deletes a product from the store.
 
-# only for local testing
-#from dotenv import load_dotenv
-#load_dotenv() 
+
 
 import os
 from flask import Flask, jsonify, request, send_from_directory
@@ -100,6 +101,24 @@ def get_products():
         import traceback
         print(traceback.format_exc())   # full stack trace
         return jsonify({"error": "Database error", "message": str(e)}), 500
+
+# -------------------------------
+# GET SINGLE PRODUCT
+# -------------------------------
+@application.route('/product/<int:product_id>', methods=['GET'])
+@cross_origin()
+def get_product(product_id):
+    con = get_db_connection()
+    cursor = con.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM products WHERE product_id = %s", (product_id,))
+    product = cursor.fetchone()
+
+    cursor.close()
+    con.close()
+
+    return jsonify(product)
+
 
 # -------------------------------
 # REMOVE ITEM FROM CART

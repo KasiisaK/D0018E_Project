@@ -27,15 +27,16 @@
 </template>
 
 <script>
-import axios from 'axios'
 import { useCartStore } from '../stores/cart'
 import { ref, onMounted } from 'vue'
 import api from '../api/index'
+import { useRouter } from 'vue-router'
 
 export default {
   setup() {
     const cartStore = useCartStore()
     const products = ref([])
+    const router = useRouter()
 
     onMounted(async () => {
       const response = await api.get('/products')
@@ -47,7 +48,8 @@ export default {
     }
 
     function goToProduct(id) {
-      this.$router.push(`/product/${id}`);
+      console.log(`Navigating to product, id: ${id}`)
+      router.push(`/product/${id}`)
     }
 
     return { products, addToCart, goToProduct}
