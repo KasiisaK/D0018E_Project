@@ -3,11 +3,11 @@
 import axios from 'axios';
 
 // local testing URL: http://127.0.0.1:5000/
-// production URL: http://d0018e-demo-env.eba-w8mzvug5.eu-north-1.elasticbeanstalk.com
+// production URL: http://d0018e-demo-env.eba-w8mzvug5.eu-north-1.elasticbeanstalk.com/
 
 // Single axios instance with relative base URL
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:5000/',           // Base URL
+  baseURL: 'http://d0018e-demo-env.eba-w8mzvug5.eu-north-1.elasticbeanstalk.com/',           // Base URL
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
