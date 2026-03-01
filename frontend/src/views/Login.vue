@@ -5,11 +5,11 @@
         <h2>Log In</h2>
         <form @submit.prevent="handleLogin">
           <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" v-model="email" required>
+            <label class="input-text" for="email">Username</label>
+            <input type="text" id="email" v-model="username" required>
           </div>
           <div class="form-group">
-            <label for="password">Password</label>
+            <label class="input-text" for="password">Password</label>
             <input type="password" id="password" v-model="password" required>
           </div>
           <button type="submit" :disabled="loading">Log In</button>
@@ -21,44 +21,41 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
+import api from '../api/index'
 
-export default {
-  setup() {
-    const email = ref('')
-    const password = ref('')
-    const loading = ref(false)
-    const error = ref('')
-    const authStore = useAuthStore()
-    const router = useRouter()
 
-    const handleLogin = async () => {
-      loading.value = true
-      error.value = ''
-      try {
-        const response = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.value, password: password.value })
-        })
-        const data = await response.json()
-        if (response.ok) {
-          authStore.setAuth(data)
-          router.push('/') // or to previous page
-        } else {
-          error.value = data.message || 'Login failed'
-        }
-      } catch (err) {
-        error.value = 'Network error'
-      } finally {
-        loading.value = false
-      }
-    }
 
-    return { email, password, loading, error, handleLogin }
+
+const username = ref('')
+const password = ref('')
+const loading = ref(false)
+const error = ref('')
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+const handleLogin = async () => {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const response = await api.post('/api/login', {
+      username: username.value,
+      password: password.value
+    })
+
+    // Success
+    authStore.setAuth(response.data)
+    router.push('/')
+  } catch (err) {
+    error.value = err.response?.data?.error || 'Login failed'
+    console.error('Login error:', err)
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -94,6 +91,9 @@ export default {
   border: 1px solid #bdc3c7;
   border-radius: 8px;
   font-size: 1rem;
+}
+.input-text{
+  color: #c71818;
 }
 button {
   width: 100%;

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import api from '../api/index'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -7,10 +8,11 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
 
-  // set auth data after login/signup
+  // Set auth data after login/signup
   function setAuth(data) {
-    user.value = data.user
+    user.value = data.username
     token.value = data.token
+    console.log('Auth set:', { user: user.value, token: token.value }) // Debug log
     localStorage.setItem('token', data.token)
   }
 
@@ -21,22 +23,13 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('token')
   }
 
-  // fetch current user (call after app load if token exists)
+  // Fetch user data if token exists (e.g. on page refresh)
   async function fetchUser() {
     if (!token.value) return
     try {
-      const response = await fetch('/api/user', {
-        headers: { Authorization: `Bearer ${token.value}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        user.value = data.user
-      } else {
-        // Token invalid
-        logout()
-      }
-    } catch (error) {
-      console.error('Failed to fetch user', error)
+      const response = await api.get('/api/user')
+      user.value = response.data.user
+    } catch {
       logout()
     }
   }

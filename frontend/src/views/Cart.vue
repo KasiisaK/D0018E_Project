@@ -41,9 +41,10 @@
             <td>
               <input
                 type="number"
-                min="1"               
+                min="1"
+                :max=getMaxStock(item.product_id)
                 v-model.number="item.quantity"
-                @change="cartStore.updateQuantity(item.product_id, item.quantity)"
+                @change="updateQuantityWithCheck(item)"
                 class="quantity-input"
               >
             </td>
@@ -54,7 +55,7 @@
 
             <td>
               <button
-                @click="cartStore.removeItem(item.product_id)"
+                @click="removeItemFromList(item)"
                 class="remove-btn"
               >
                 ✕
@@ -93,25 +94,65 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue'
 import { useCartStore } from '../stores/cart'
+import { useAuthStore } from '../stores/auth'
+import api from '../api/index'
 
-export default {
-  setup() {
-    const cartStore = useCartStore()
+const cartStore = useCartStore()
+const authStore = useAuthStore()
 
-    cartStore.fetchCart(1)
+const products = ref([])
+const loading = ref(true)
 
-    return { cartStore }
-  },
-
-  methods: {
-    fakeOrder() {
-      alert('Order placed! (not really, this is just a demo)')
-      this.cartStore.createOrder(1)
-    }
+onMounted(async () => {
+  // Load products once (for stock lookup)
+  try {
+    const res = await api.get('/products')
+    products.value = res.data
+  } catch (err) {
+    console.error('Failed to load products for stock check:', err)
   }
 
+  // Load cart if logged in
+  if (authStore.isAuthenticated) {
+    await cartStore.fetchCart()
+  }
+  loading.value = false
+})
+
+// Used to set max limit on quantity input based on product stock
+function getMaxStock(productId) {
+  return products.value.find(p => p.product_id === productId)
+}
+
+async function updateQuantityWithCheck(item) {
+  const max = getMaxStock(item.product_id)
+  if (item.quantity > max) {
+    item.quantity = max
+    alert(`Only ${max} available in stock!`)
+  }
+  await cartStore.updateQuantity(item.product_id, item.quantity)
+}
+
+async function removeItemFromList(item) {
+  await cartStore.removeItem(item.product_id)
+}
+
+// Place order (unchanged)
+async function fakeOrder() {
+  if (!authStore.isAuthenticated) {
+    alert('Please log in to place an order')
+    return
+  }
+  try {
+    await cartStore.createOrder()
+    alert(`Order placed successfully! (fake, no actual order created)`)
+  } catch (err) {
+    alert('Failed to place order')
+    console.error(err)
+  }
 }
 </script>
 

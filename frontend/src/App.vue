@@ -10,13 +10,13 @@
           <a href="#">Contact</a>
         </div>
         <div class="nav-right">
-          <!--<template v-if="authStore.isAuthenticated">         Cooment out for now, we don't have auth yet
+          <template v-if="authStore.isAuthenticated">
             <span class="user-greeting">Hi, {{ authStore.user?.name }}</span>
             <button @click="logout" class="logout-btn">Logout</button>
           </template>
           <template v-else>
             <router-link to="/login" class="nav-link">Login</router-link>
-          </template>-->
+          </template>
           <router-link to="/cart" class="cart-icon">
             <i class="fas fa-shopping-cart"></i>
             <span class="cart-count">{{ cartStore.totalTypes }}</span>
@@ -24,11 +24,9 @@
         </div>
       </div>
     </nav>
-
     <main class="main-content">
       <router-view />
     </main>
-
     <footer class="footer">
       <div class="container">
         <p>&copy; 2026 bigMug | All rights reserved.</p>
@@ -38,17 +36,36 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { useCartStore } from './stores/cart'
+import { useAuthStore } from './stores/auth'
+import { onMounted, watch } from 'vue' // watch to update cart on login/logout
 
-export default {
-  setup() {
-    const cartStore = useCartStore()
+const cartStore = useCartStore()
+const authStore = useAuthStore()
 
-    // load cart once when app starts
-    cartStore.fetchCart(1)
-
-    return { cartStore }
+onMounted(async () => {
+  // Initial load: restore user + cart if already logged in
+  await authStore.fetchUser()
+  if (authStore.isAuthenticated) {
+    await cartStore.fetchCart()
   }
+})
+
+// Watch auth stare and update cart icon accordingly
+watch(
+  () => authStore.isAuthenticated,
+  async (isAuth) => {
+    if (isAuth) {
+      await cartStore.fetchCart()
+    } else {
+      cartStore.items = []  // clear locally
+    }
+  },
+  { immediate: true }  // run once on mount too
+)
+
+const logout = () => {
+  authStore.logout()
 }
 </script>

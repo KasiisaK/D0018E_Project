@@ -5,19 +5,15 @@
         <h2>Sign Up</h2>
         <form @submit.prevent="handleSignup">
           <div class="form-group">
-            <label for="name">Name</label>
+            <label class="input-text" for="name">Name</label>
             <input type="text" id="name" v-model="name" required>
           </div>
           <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" v-model="email" required>
-          </div>
-          <div class="form-group">
-            <label for="password">Password</label>
+            <label class="input-text" for="password">Password</label>
             <input type="password" id="password" v-model="password" required>
           </div>
           <div class="form-group">
-            <label for="confirmPassword">Confirm Password</label>
+            <label class="input-text" for="confirmPassword">Confirm Password</label>
             <input type="password" id="confirmPassword" v-model="confirmPassword" required>
           </div>
           <button type="submit" :disabled="loading">Sign Up</button>
@@ -29,54 +25,44 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
+import api from '../api/index'
 
-export default {
-  setup() {
-    const name = ref('')
-    const email = ref('')
-    const password = ref('')
-    const confirmPassword = ref('')
-    const loading = ref(false)
-    const error = ref('')
-    const authStore = useAuthStore()
-    const router = useRouter()
+const name = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+const loading = ref(false)
+const error = ref('')
 
-    const handleSignup = async () => {
-      if (password.value !== confirmPassword.value) {
-        error.value = 'Passwords do not match'
-        return
-      }
-      loading.value = true
-      error.value = ''
-      try {
-        const response = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            name: name.value, 
-            email: email.value, 
-            password: password.value 
-          })
-        })
-        const data = await response.json()
-        if (response.ok) {
-          authStore.setAuth(data) // auto-login
-          router.push('/')
-        } else {
-          error.value = data.message || 'Signup failed'
-        }
-      } catch (err) {
-        error.value = 'Network error'
-      } finally {
-        loading.value = false
-      }
-    }
+const authStore = useAuthStore()
+const router = useRouter()
 
-    return { name, email, password, confirmPassword, loading, error }
+const handleSignup = async () => {
+  if (password.value !== confirmPassword.value) {
+    error.value = 'Passwords do not match'
+    return
+  }
+
+  loading.value = true
+  error.value = ''
+
+  try {
+    const response = await api.post('/api/register', {
+      username: name.value,
+      password: password.value
+    })
+
+    // Success
+    authStore.setAuth(response.data)
+    router.push('/')
+  } catch (err) {
+    error.value = err.response?.data?.error || 'Signup failed'
+    console.error('Signup error:', err)
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -112,6 +98,9 @@ export default {
   border: 1px solid #bdc3c7;
   border-radius: 8px;
   font-size: 1rem;
+}
+.input-text{
+  color: #c71818;
 }
 button {
   width: 100%;

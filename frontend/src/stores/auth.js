@@ -9,7 +9,11 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Set auth data after login/signup
   function setAuth(data) {
-    user.value = data.user
+    user.value = {
+      id: data.user.id,
+      name: data.user.username,
+    }
+
     token.value = data.token
     localStorage.setItem('token', data.token)
   }
@@ -21,23 +25,16 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('token')
   }
 
-  // Example: fetch current user (call after app load if token exists)
+  // Fetch user data if token exists (e.g. on page refresh)
   async function fetchUser() {
     if (!token.value) return
+
     try {
-      const response = await fetch('/api/user', {
-        headers: { Authorization: `Bearer ${token.value}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        user.value = data.user
-      } else {
-        // Token invalid
-        logout()
-      }
+      const response = await api.get('/api/user')
+      user.value = response.data.name
     } catch (error) {
       console.error('Failed to fetch user', error)
-      logout()
+      logout() // Clear auth if token is invalid/expired
     }
   }
 
