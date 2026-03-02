@@ -16,24 +16,26 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `orderitems`
+-- Table structure for table `reviews`
 --
 
-DROP TABLE IF EXISTS `orderitems`;
+DROP TABLE IF EXISTS `reviews`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `orderitems` (
-  `order_item_id` int NOT NULL AUTO_INCREMENT,
-  `order_id` int NOT NULL,
+CREATE TABLE `reviews` (
+  `review_id` int NOT NULL AUTO_INCREMENT,
   `product_id` int NOT NULL,
-  `quantity` int NOT NULL,
-  `price_at_purchase` decimal(10,2) NOT NULL,
-  PRIMARY KEY (`order_item_id`),
-  KEY `fk_orderitems_order` (`order_id`),
-  KEY `fk_orderitems_product` (`product_id`),
-  CONSTRAINT `fk_orderitems_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`),
-  CONSTRAINT `fk_orderitems_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `user_id` int NOT NULL,
+  `rating` int NOT NULL,
+  `comment` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`review_id`),
+  UNIQUE KEY `unique_review` (`product_id`,`user_id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `reviews_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE CASCADE,
+  CONSTRAINT `reviews_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  CONSTRAINT `reviews_chk_1` CHECK ((`rating` between 1 and 5))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -45,4 +47,4 @@ CREATE TABLE `orderitems` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-14 20:08:43
+-- Dump completed on 2026-03-02 19:23:30

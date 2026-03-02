@@ -16,22 +16,14 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `orders`
+-- Dumping data for table `cartitems`
 --
 
-DROP TABLE IF EXISTS `orders`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `orders` (
-  `order_id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `order_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `status` varchar(50) DEFAULT 'PLACED',
-  PRIMARY KEY (`order_id`),
-  KEY `fk_order_user` (`user_id`),
-  CONSTRAINT `fk_order_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+LOCK TABLES `cartitems` WRITE;
+/*!40000 ALTER TABLE `cartitems` DISABLE KEYS */;
+INSERT INTO `cartitems` VALUES (91,1,19,1),(92,1,15,3),(159,3,15,2),(161,3,19,1);
+/*!40000 ALTER TABLE `cartitems` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -42,4 +34,4 @@ CREATE TABLE `orders` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-14 20:08:42
+-- Dump completed on 2026-03-02 19:24:31

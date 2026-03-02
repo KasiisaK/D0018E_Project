@@ -16,13 +16,13 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Dumping data for table `orders`
+-- Dumping data for table `products`
 --
 
-LOCK TABLES `orders` WRITE;
-/*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,1,'2026-02-14 17:50:15','PLACED');
-/*!40000 ALTER TABLE `orders` ENABLE KEYS */;
+LOCK TABLES `products` WRITE;
+/*!40000 ALTER TABLE `products` DISABLE KEYS */;
+INSERT INTO `products` VALUES (12,'Cute Cat Mug with Lid','add when can copy',5.99,6,'http://127.0.0.1:5000/static/cat.png',3.50,0),(14,'Mymochi Cup Friends for life','add when can copy',6.99,7,'http://127.0.0.1:5000/static/cute.jpg',0.00,0),(15,'Vixar Its Fine','add when can copy',6.99,7,'http://127.0.0.1:5000/static/fine.png',0.00,0),(19,'Depesche 12909 Dino World Cup','add when can copy',21.99,2,'http://127.0.0.1:5000/static/dino.png',0.00,0);
+/*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -34,4 +34,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-14 20:10:47
+-- Dump completed on 2026-03-02 19:24:32

@@ -21,7 +21,7 @@
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'alice','hashed_password_1','2026-01-30 14:20:20'),(2,'bob','hashed_password_2','2026-01-30 14:20:20');
+INSERT INTO `users` VALUES (1,'alice','hashed_password_1','2026-01-30 14:20:20'),(2,'bob','hashed_password_2','2026-01-30 14:20:20'),(3,'a','$2b$12$caFmjLsb8g0ezNujxroRPuVZqNu8yXJ2xsBa0WYNjv8KFD5np04NS','2026-03-01 14:00:05');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -34,4 +34,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-14 20:10:47
+-- Dump completed on 2026-03-02 19:24:31

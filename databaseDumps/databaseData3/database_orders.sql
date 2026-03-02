@@ -16,13 +16,13 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Dumping data for table `cartitems`
+-- Dumping data for table `orders`
 --
 
-LOCK TABLES `cartitems` WRITE;
-/*!40000 ALTER TABLE `cartitems` DISABLE KEYS */;
-INSERT INTO `cartitems` VALUES (11,1,2,1);
-/*!40000 ALTER TABLE `cartitems` ENABLE KEYS */;
+LOCK TABLES `orders` WRITE;
+/*!40000 ALTER TABLE `orders` DISABLE KEYS */;
+INSERT INTO `orders` VALUES (1,1,'2026-02-14 17:50:15','PLACED'),(2,1,'2026-02-23 21:23:05','Pending'),(3,1,'2026-02-23 21:29:13','Pending'),(10,3,'2026-03-01 17:29:36','Pending'),(11,3,'2026-03-01 17:30:40','Pending');
+/*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -34,4 +34,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-14 20:10:47
+-- Dump completed on 2026-03-02 19:24:31
