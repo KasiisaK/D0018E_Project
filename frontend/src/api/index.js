@@ -7,7 +7,7 @@ import axios from 'axios';
 
 // Single axios instance with relative base URL
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:5000/',           // Base URL
+  baseURL: 'http://d0018e-demo-env.eba-w8mzvug5.eu-north-1.elasticbeanstalk.com/',           // Base URL
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

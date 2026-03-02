@@ -1,26 +1,30 @@
-# deploy.ps1 - Clean build, copy, and zip for Elastic Beanstalk deployment
+# Script by ChatGPT to make it easier to deploy the app to Elastic Beanstalk.
+# deploy.ps1 - Clean build, copy dist + product images, and zip for Elastic Beanstalk
 
 Write-Host "=== Starting clean deployment build ===" -ForegroundColor Cyan
 
-# Configuration (change only if your folder names are different)
-$frontendDir   = "frontend"
-$backendDir    = "backend"
-$zipFile       = "bigmug-app.zip"
-$distPath      = "$frontendDir\dist"
-$staticPath    = "$backendDir\static"
+# ────────────────────────────────────────────────
+# Configuration
+# ────────────────────────────────────────────────
+$frontendDir    = "frontend"
+$backendDir     = "backend"
+$zipFile        = "bigmug-app.zip"
+$distPath       = "$frontendDir\dist"
+$staticPath     = "$backendDir\static"
+$productImages  = "$frontendDir\src\assets\images"
 
+# ────────────────────────────────────────────────
 # Step 1: Clean previous build artifacts
+# ────────────────────────────────────────────────
 Write-Host "Cleaning old dist, static, and zip..." -ForegroundColor Yellow
 
 # Remove old dist folder
 if (Test-Path $distPath) {
     Remove-Item -Path $distPath -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host "  → Removed old dist folder" -ForegroundColor Green
-} else {
-    Write-Host "  → No old dist folder found" -ForegroundColor Gray
 }
 
-# Clear backend/static contents (keep folder)
+# Clear backend/static contents (keep the folder itself)
 if (Test-Path $staticPath) {
     Remove-Item -Path "$staticPath\*" -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host "  → Cleared backend/static contents" -ForegroundColor Green
@@ -35,11 +39,13 @@ if (Test-Path $zipFile) {
     Write-Host "  → Removed old $zipFile" -ForegroundColor Green
 }
 
+# ────────────────────────────────────────────────
 # Step 2: Build frontend
+# ────────────────────────────────────────────────
 Write-Host "`nBuilding Vue frontend..." -ForegroundColor Yellow
 Set-Location $frontendDir
 npm run build
-Set-Location ..
+Set-Location $PSScriptRoot
 
 # Check if build succeeded
 if (-Not (Test-Path $distPath)) {
@@ -48,17 +54,36 @@ if (-Not (Test-Path $distPath)) {
 }
 Write-Host "Frontend build completed successfully." -ForegroundColor Green
 
+# ────────────────────────────────────────────────
 # Step 3: Copy dist → backend/static
+# ────────────────────────────────────────────────
 Write-Host "`nCopying dist → backend/static..." -ForegroundColor Yellow
 Copy-Item -Path "$distPath\*" -Destination $staticPath -Recurse -Force
-Write-Host "  → Copied all files successfully" -ForegroundColor Green
+Write-Host "  → Copied built assets successfully" -ForegroundColor Green
 
-# Step 4: Create new zip
+# ────────────────────────────────────────────────
+# Step 4: Copy product images from frontend/src/assets/images
+# ────────────────────────────────────────────────
+Write-Host "`nCopying product images from src/assets/images..." -ForegroundColor Yellow
+
+if (Test-Path $productImages) {
+    Copy-Item -Path "$productImages\*" -Destination $staticPath -Recurse -Force
+    Write-Host "  → Copied all product images successfully" -ForegroundColor Green
+} else {
+    Write-Host "  WARNING: Product images folder not found: $productImages" -ForegroundColor Yellow
+    Write-Host "  → Continuing without extra images..." -ForegroundColor Yellow
+}
+
+# ────────────────────────────────────────────────
+# Step 5: Create new zip (only backend contents)
+# ────────────────────────────────────────────────
 Write-Host "`nCreating new zip archive: $zipFile" -ForegroundColor Yellow
 Compress-Archive -Path "$backendDir\*" -DestinationPath $zipFile -Force
 Write-Host "Zip created successfully." -ForegroundColor Green
 
+# ────────────────────────────────────────────────
 # Final summary
+# ────────────────────────────────────────────────
 Write-Host "`n=== Deployment package ready ===" -ForegroundColor Cyan
 Get-Item $zipFile | Format-List Name, Length, LastWriteTime
 

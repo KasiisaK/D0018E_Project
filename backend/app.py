@@ -22,7 +22,7 @@
 
 
 import os
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, current_app, jsonify, request, send_from_directory
 from flask_cors import CORS, cross_origin
 from db import get_db_connection
 
@@ -37,7 +37,11 @@ from functools import wraps
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
-application = Flask(__name__, static_folder="dist", static_url_path="")
+application = Flask(
+    __name__,
+    static_folder='static',          # physical folder
+    static_url_path='/static'        # URL prefix
+)
 CORS(application)
 
 bcrypt = Bcrypt(application)
@@ -439,9 +443,24 @@ def add_product():
 @application.route("/", defaults={"path": ""})
 @application.route("/<path:path>")
 def serve_vue(path):
-    if path != "" and os.path.exists(os.path.join(application.static_folder, path)):
-        return send_from_directory(application.static_folder, path)
-    return send_from_directory(application.static_folder, "index.html")
+    static_folder = current_app.static_folder
+    print(f"DEBUG: static_folder = {static_folder}")
+    print(f"DEBUG: requested path = /{path}")
+
+    full_path = os.path.join(static_folder, path)
+    print(f"DEBUG: checking if exists: {full_path} → {os.path.exists(full_path)}")
+
+    if path != "" and os.path.exists(full_path) and not os.path.isdir(full_path):
+        print(f"DEBUG: serving file: {path}")
+        return send_from_directory(static_folder, path)
+
+    index_path = os.path.join(static_folder, "index.html")
+    print(f"DEBUG: serving index.html: {index_path} → exists: {os.path.exists(index_path)}")
+
+    if os.path.exists(index_path):
+        return send_from_directory(static_folder, "index.html")
+    else:
+        return "index.html not found in static folder", 404
 
 
 if __name__ == "__main__":
