@@ -28,8 +28,6 @@ import { useRouter } from 'vue-router'
 import api from '../api/index'
 
 
-
-
 const username = ref('')
 const password = ref('')
 const loading = ref(false)

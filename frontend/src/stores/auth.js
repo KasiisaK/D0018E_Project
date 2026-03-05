@@ -1,42 +1,40 @@
+// stores/auth.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import api from '../api'
 
 export const useAuthStore = defineStore('auth', () => {
+  // Initialize token from localStorage
+  const token = ref(localStorage.getItem('token'))
   const user = ref(null)
-  const token = ref(localStorage.getItem('token') || null)
 
   const isAuthenticated = computed(() => !!token.value)
 
-  // Set auth data after login/signup
-  function setAuth(data) {
-    user.value = {
-      id: data.user.id,
-      name: data.user.username,
+  // Fetch current user data using the token
+  async function fetchUser() {
+    if (!token.value) return
+    try {
+      const response = await api.get('/api/user')
+      user.value = response.data.user
+    } catch (error) {
+      console.error('Failed to fetch user', error)
+      logout() // token invalid – logout
     }
+  }
 
+  // Set auth data after login/register
+  function setAuth(data) {
     token.value = data.token
+    user.value = data.user
     localStorage.setItem('token', data.token)
   }
 
-  // Clear auth on logout
+  // Logout – clear state and localStorage
   function logout() {
-    user.value = null
     token.value = null
+    user.value = null
     localStorage.removeItem('token')
   }
 
-  // Fetch user data if token exists (e.g. on page refresh)
-  async function fetchUser() {
-    if (!token.value) return
-
-    try {
-      const response = await api.get('/api/user')
-      user.value = response.data.name
-    } catch (error) {
-      console.error('Failed to fetch user', error)
-      logout() // Clear auth if token is invalid/expired
-    }
-  }
-
-  return { user, token, isAuthenticated, setAuth, logout, fetchUser }
+  return { user, token, isAuthenticated, fetchUser, setAuth, logout }
 })

@@ -5,7 +5,7 @@
       <div class="breadcrumb">
         <router-link to="/">Home</router-link> &gt;
         <router-link to="/products">Shop</router-link> &gt;
-        <span v-if="product">{{ product.name}}</span>
+        <span v-if="product">{{ product.name }}</span>
         <span v-else>Loading...</span>
       </div>
     </div>
@@ -20,8 +20,8 @@
       <router-link to="/products">Back to Shop</router-link>
     </div>
 
-    <!-- Product Detail (only show when product is loaded) -->
-    <section v-else class="product-detail">
+    <!-- Product Detail (only when product is loaded) -->
+    <section v-else-if="product" class="product-detail">
       <div class="container">
         <div class="product-detail-grid">
           <!-- Left: Images -->
@@ -38,9 +38,9 @@
               € {{ Number(product.price)?.toFixed(2) || '0.00' }}
             </p>
 
-            <!-- Star rating -->
+            <!-- Star rating (average) -->
             <div class="product-rating">
-              <i v-for="star in fullStars"   :key="'full'+star"   class="fas fa-star"></i>
+              <i v-for="star in fullStars" :key="'full'+star" class="fas fa-star"></i>
               <i v-if="hasHalfStar" class="fas fa-star-half-alt"></i>
               <i v-for="star in emptyStars" :key="'empty'+star" class="far fa-star"></i>
               <span>{{ Number(product.average_rating || 0)?.toFixed(1) }}</span>
@@ -68,8 +68,22 @@
             </div>
           </div>
         </div>
+
+        <!-- Reviews component -->
+        <ProductComments
+          :productId="product.product_id"
+          @review-submitted="refreshProduct"
+          @review-updated="refreshProduct"
+          @review-deleted="refreshProduct"
+        />
       </div>
     </section>
+
+    <!-- Fallback if product is null but no error (shouldn't happen) -->
+    <div v-else class="container text-center" style="padding: 100px 20px;">
+      <p>Product not found.</p>
+      <router-link to="/products">Back to Shop</router-link>
+    </div>
   </div>
 </template>
 
@@ -78,6 +92,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCartStore } from '../stores/cart'
 import api from '../api/index'
+import ProductComments from '../components/ProductComments.vue'
 
 const route = useRoute()
 const cartStore = useCartStore()
@@ -99,9 +114,14 @@ onMounted(async () => {
   try {
     console.log(`Fetching product with ID: ${id}`)
     const response = await api.get(`/product/${id}`)
-    
+
     console.log('API response:', response.data)
-    product.value = response.data
+    if (!response.data) {
+      error.value = 'Product not found'
+      product.value = null
+    } else {
+      product.value = response.data
+    }
   } catch (err) {
     console.error('Failed to load product:', err)
     error.value = err.response?.data?.message || 'Could not load product details'
@@ -110,12 +130,20 @@ onMounted(async () => {
   }
 })
 
-// Add to cart basesd on selected quantity
 function addToCart() {
   if (!product.value) return
   cartStore.addToCart(product.value.product_id, quantity.value)
 }
 
+const refreshProduct = async () => {
+  const id = route.params.id
+  try {
+    const response = await api.get(`/product/${id}`)
+    product.value = response.data
+  } catch (err) {
+    console.error('Failed to refresh product:', err)
+  }
+}
 
 const fullStars   = computed(() => Math.floor(Number(product.value?.average_rating || 0)))
 const hasHalfStar = computed(() => Number(product.value?.average_rating || 0) % 1 >= 0.5)

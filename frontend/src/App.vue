@@ -11,7 +11,7 @@
         </div>
         <div class="nav-right">
           <template v-if="authStore.isAuthenticated">
-            <span class="user-greeting">Hi, {{ authStore.user?.name }}</span>
+            <span class="user-greeting">Hi, {{ authStore.user?.username }}</span>
             <button @click="logout" class="logout-btn">Logout</button>
           </template>
           <template v-else>

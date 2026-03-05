@@ -204,17 +204,163 @@ def get_product(product_id):
     con = get_db_connection()
     cursor = con.cursor(dictionary=True)
 
+    # Get product details
     cursor.execute(
         "SELECT * FROM products WHERE product_id = %s",
         (product_id,)
     )
     product = cursor.fetchone()
 
+    if not product:
+        cursor.close()
+        con.close()
+        return jsonify({"error": "Product not found"}), 404
+
+    # Get average rating and review count
+    cursor.execute("""
+        SELECT 
+            COALESCE(AVG(rating), 0) AS average_rating,
+            COUNT(*) AS review_count
+        FROM reviews
+        WHERE product_id = %s
+    """, (product_id,))
+    stats = cursor.fetchone()
+
+    product["average_rating"] = float(stats["average_rating"])
+    product["review_count"] = stats["review_count"]
+
     cursor.close()
     con.close()
 
     return jsonify(product)
 
+# ------------------------------
+# Product endpoints
+# ------------------------------
+# GET
+@application.route("/products/<int:product_id>/reviews", methods=["GET"])
+@cross_origin()
+def get_product_reviews(product_id):
+    con = get_db_connection()
+    cursor = con.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT r.review_id, r.user_id, u.username AS user_name,
+               r.rating, r.comment, r.created_at
+        FROM reviews r
+        JOIN users u ON r.user_id = u.user_id
+        WHERE r.product_id = %s
+        ORDER BY r.created_at DESC
+    """, (product_id,))
+
+    reviews = cursor.fetchall()
+    cursor.close()
+    con.close()
+
+    return jsonify(reviews)
+
+# POST
+@application.route("/products/<int:product_id>/reviews", methods=["POST"])
+@cross_origin()
+@token_required
+def create_review(product_id):
+    data = request.json
+    user_id = request.user_id
+    rating = data.get("rating")
+    comment = data.get("comment")  # can be "None"
+
+    if not rating or not (1 <= rating <= 5):
+        return jsonify({"error": "Rating must be between 1 and 5"}), 400
+
+    con = get_db_connection()
+    cursor = con.cursor()
+
+    # Check if user already reviewed this product
+    cursor.execute("""
+        SELECT review_id FROM reviews
+        WHERE product_id = %s AND user_id = %s
+    """, (product_id, user_id))
+    if cursor.fetchone():
+        cursor.close()
+        con.close()
+        return jsonify({"error": "You have already reviewed this product"}), 409
+
+    # Insert new review
+    cursor.execute("""
+        INSERT INTO reviews (product_id, user_id, rating, comment)
+        VALUES (%s, %s, %s, %s)
+    """, (product_id, user_id, rating, comment))
+
+    con.commit()
+    cursor.close()
+    con.close()
+
+    return jsonify({"message": "Review created"}), 201
+
+# PUT (update) an existing review (auth required)
+@application.route("/products/<int:product_id>/reviews", methods=["PUT"])
+@cross_origin()
+@token_required
+def update_review(product_id):
+    data = request.json
+    user_id = request.user_id
+    rating = data.get("rating")
+    comment = data.get("comment")
+
+    if not rating or not (1 <= rating <= 5):
+        return jsonify({"error": "Rating must be between 1 and 5"}), 400
+
+    con = get_db_connection()
+    cursor = con.cursor()
+
+    # Check that the review exists and belongs to the user
+    cursor.execute("""
+        SELECT review_id FROM reviews
+        WHERE product_id = %s AND user_id = %s
+    """, (product_id, user_id))
+    if not cursor.fetchone():
+        cursor.close()
+        con.close()
+        return jsonify({"error": "Review not found"}), 404
+
+    # Update
+    cursor.execute("""
+        UPDATE reviews
+        SET rating = %s, comment = %s
+        WHERE product_id = %s AND user_id = %s
+    """, (rating, comment, product_id, user_id))
+
+    con.commit()
+    cursor.close()
+    con.close()
+
+    return jsonify({"message": "Review updated"}), 200
+
+# Delete
+@application.route("/products/<int:product_id>/reviews", methods=["DELETE"])
+@cross_origin()
+@token_required
+def delete_review(product_id):
+    user_id = request.user_id
+
+    con = get_db_connection()
+    cursor = con.cursor()
+
+    cursor.execute("""
+        DELETE FROM reviews
+        WHERE product_id = %s AND user_id = %s
+    """, (product_id, user_id))
+
+    if cursor.rowcount == 0:
+        cursor.close()
+        con.close()
+        return jsonify({"error": "Review not found"}), 404
+
+    con.commit()
+    cursor.close()
+    con.close()
+
+    return jsonify({"message": "Review deleted"}), 200
 
 # ===============================
 # CART (AUTH REQUIRED)
