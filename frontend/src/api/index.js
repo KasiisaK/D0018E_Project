@@ -23,15 +23,6 @@ api.interceptors.request.use(config => {
   return config
 })
 
-// Error logging
-api.interceptors.response.use(
-  response => response,
-  error => {
-    console.error('API Error:', error.response?.data || error.message)
-    return Promise.reject(error)
-  }
-)
-
 // Show error details in console for easier debugging
 api.interceptors.response.use(
   response => response,

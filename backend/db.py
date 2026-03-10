@@ -14,7 +14,7 @@ def get_db_connection():
             database = os.getenv("DB_NAME"),
             connect_timeout = 10
         )
-        print("Database connection successful")
+        print(f"Database connection with {os.getenv('DB_HOST')} successful")
         return connection
     except Error as e:
         print(f"Database connection failed: {e}")

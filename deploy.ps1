@@ -1,5 +1,6 @@
 # Script by ChatGPT to make it easier to deploy the app to Elastic Beanstalk.
 # deploy.ps1 - Clean build, copy dist + product images, and zip for Elastic Beanstalk
+# Does not work (most of the time), idk just do it manually
 
 Write-Host "=== Starting clean deployment build ===" -ForegroundColor Cyan
 

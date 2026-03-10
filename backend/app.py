@@ -1,15 +1,21 @@
 
 # Token Decorator:
 # Generates a JWT token and used for authentication on protected routes. Checks for token in Authorization header, verifies it, and extracts user ID for use in route handlers.
+# Admin Token for Admin routs, checks if user has the is_admin flag set in the database.
 #
 # API enpoints:
 # === USER AUTH ENDPOINTS ===
 # /api/register - Register new user, returns token for immediate login aswell
 # /api/login - Login existing user, returns token
 # /api/user - Get current user info (requires auth)
+# /api/user/purchases - Get all products user has purchased
 # === PRODUCTS ===
 # /products - Get all products
+# /api/products/bestSellers - Get best sellers (products with flag is_best_seller = 1)
 # /product/<id> - Get single product by ID
+# === REVIEWS ===
+# /products/<id>/reviews - Get reviews for a product
+# /products/<id>/reviews - Create new review for a product
 # === CART (AUTH REQUIRED) ===
 # /cart - View cart items
 # /cart/add - Add item to cart (will add to existing quantity if item already in cart)
@@ -77,7 +83,36 @@ def token_required(f):
     return decorated
 
 # ===============================
-# USER AUTH ENDPOINTS
+# ADMIN DECORATOR
+# ===============================
+
+def admin_required(f):
+    @wraps(f)
+    @token_required  # must be logged in first (uses ^)
+    def decorated(*args, **kwargs):
+        user_id = request.user_id
+        
+        con = get_db_connection()
+        cursor = con.cursor(dictionary=True)
+        
+        cursor.execute(
+            "SELECT is_admin FROM users WHERE user_id = %s",
+            (user_id,)
+        )
+        user = cursor.fetchone()
+        
+        cursor.close()
+        con.close()
+        
+        if not user or not user['is_admin']:
+            return jsonify({"error": "Admin access required"}), 403
+        
+        return f(*args, **kwargs)
+    
+    return decorated
+
+# ===============================
+# USER AUTH ENDPOINTS (AUTH REQUIRED)
 # ===============================
 
 # ------------------------------
@@ -154,7 +189,7 @@ def login():
 
 
 # ------------------------------
-# Get current user info (AUTH REQUIRED)
+# Get current user info
 # ------------------------------
 @application.route("/api/user", methods=["GET"])
 @cross_origin()
@@ -176,11 +211,36 @@ def get_current_user():
 
     return jsonify({"user": user})
 
+# ------------------------------
+# Get all user purchesd products
+# ------------------------------
+@application.route("/api/user/purchases", methods=["GET"])
+@cross_origin()
+@token_required
+def get_user_purchases():
+    user_id = request.user_id
+
+    con = get_db_connection()
+    cursor = con.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT DISTINCT oi.product_id
+        FROM orders o
+        JOIN orderitems oi ON o.order_id = oi.order_id
+        WHERE o.user_id = %s
+    """, (user_id,))
+
+    purchases = cursor.fetchall()
+
+    cursor.close()
+    con.close()
+
+    return jsonify({"purchases": purchases})
+
 
 # ===============================
 # PRODUCTS
 # ===============================
-
 @application.route("/products", methods=["GET"])
 @cross_origin()
 def get_products():
@@ -188,6 +248,24 @@ def get_products():
     cursor = con.cursor(dictionary=True)
 
     cursor.execute("SELECT * FROM products")
+    products = cursor.fetchall()
+
+    cursor.close()
+    con.close()
+
+    return jsonify(products)
+
+# -----------------------------
+# get best sellers
+# -----------------------------
+@application.route("/api/products/bestSellers", methods=["GET"])
+@cross_origin()
+def get_best_sellers():
+    print("DEBUG: Fetching best sellers")
+    con = get_db_connection()
+    cursor = con.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM products WHERE is_best_seller = 1")
     products = cursor.fetchall()
 
     cursor.close()
@@ -234,10 +312,13 @@ def get_product(product_id):
 
     return jsonify(product)
 
+# ==============================
+# REVIEWS (AUTH REQUIRED for POSTING reviews)
+# ==============================
+
 # ------------------------------
-# Product endpoints
+# Get reviews for a product
 # ------------------------------
-# GET
 @application.route("/products/<int:product_id>/reviews", methods=["GET"])
 @cross_origin()
 def get_product_reviews(product_id):
@@ -259,7 +340,10 @@ def get_product_reviews(product_id):
 
     return jsonify(reviews)
 
-# POST
+
+# ------------------------------
+# Create new review for a product (auth required, 1 review per user per product)
+# ------------------------------
 @application.route("/products/<int:product_id>/reviews", methods=["POST"])
 @cross_origin()
 @token_required
@@ -297,75 +381,9 @@ def create_review(product_id):
 
     return jsonify({"message": "Review created"}), 201
 
-# PUT (update) an existing review (auth required)
-@application.route("/products/<int:product_id>/reviews", methods=["PUT"])
-@cross_origin()
-@token_required
-def update_review(product_id):
-    data = request.json
-    user_id = request.user_id
-    rating = data.get("rating")
-    comment = data.get("comment")
-
-    if not rating or not (1 <= rating <= 5):
-        return jsonify({"error": "Rating must be between 1 and 5"}), 400
-
-    con = get_db_connection()
-    cursor = con.cursor()
-
-    # Check that the review exists and belongs to the user
-    cursor.execute("""
-        SELECT review_id FROM reviews
-        WHERE product_id = %s AND user_id = %s
-    """, (product_id, user_id))
-    if not cursor.fetchone():
-        cursor.close()
-        con.close()
-        return jsonify({"error": "Review not found"}), 404
-
-    # Update
-    cursor.execute("""
-        UPDATE reviews
-        SET rating = %s, comment = %s
-        WHERE product_id = %s AND user_id = %s
-    """, (rating, comment, product_id, user_id))
-
-    con.commit()
-    cursor.close()
-    con.close()
-
-    return jsonify({"message": "Review updated"}), 200
-
-# Delete
-@application.route("/products/<int:product_id>/reviews", methods=["DELETE"])
-@cross_origin()
-@token_required
-def delete_review(product_id):
-    user_id = request.user_id
-
-    con = get_db_connection()
-    cursor = con.cursor()
-
-    cursor.execute("""
-        DELETE FROM reviews
-        WHERE product_id = %s AND user_id = %s
-    """, (product_id, user_id))
-
-    if cursor.rowcount == 0:
-        cursor.close()
-        con.close()
-        return jsonify({"error": "Review not found"}), 404
-
-    con.commit()
-    cursor.close()
-    con.close()
-
-    return jsonify({"message": "Review deleted"}), 200
-
 # ===============================
 # CART (AUTH REQUIRED)
 # ===============================
-
 @application.route("/cart", methods=["GET"])
 @cross_origin()
 @token_required
@@ -435,6 +453,9 @@ def add_to_cart():
 
     return jsonify({"message": "Cart updated"}), 200
 
+# ------------------------------
+# Set exact quantity for an item in cart
+# ------------------------------
 @application.route("/cart/setQuantity", methods=["PUT"])
 @cross_origin()
 @token_required
@@ -459,6 +480,9 @@ def set_cart_quantity():
 
     return jsonify({"message": "Cart updated"})
 
+# ------------------------------
+# Remove from cart
+# ------------------------------
 @application.route("/cart/remove", methods=["DELETE"])
 @cross_origin()
 @token_required
@@ -481,12 +505,13 @@ def remove_from_cart():
 
     return jsonify({"message": "Item removed from cart"})
 
+
 # ===============================
 # ORDERS (AUTH REQUIRED)
 # ===============================
 
 # ------------------------------
-# Create order from cart (will also clear cart and update stock)
+# Create order from cart (will also clear cart)
 # ------------------------------
 @application.route('/orders/create', methods=['POST'])
 @cross_origin()
@@ -549,37 +574,141 @@ def create_order():
 
 
 # ===============================
-# ADMIN
+# ADMIN (ADMIN AUTH REQUIRED)
 # ===============================
 
 # ------------------------------
-# Add new product (no auth for simplicity, but should be protected in real app)
+# Add new product 
 # ------------------------------
 
 @application.route("/admin/products/add", methods=["POST"])
 @cross_origin()
+@admin_required
 def add_product():
     data = request.json
-
+    
     con = get_db_connection()
-    cursor = con.cursor()
-
+    cursor = con.cursor() 
+    
     cursor.execute("""
-        INSERT INTO products (name, description, price, stock_quantity, image_url)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (
-        data["name"],
-        data["description"],
-        data["price"],
-        data["stock_quantity"],
-        data.get("image_url")
-    ))
+            INSERT INTO products (name, description, price, stock_quantity, image_url, average_rating, review_count, is_best_seller)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            data["name"],
+            data["description"],
+            data["price"],
+            data["stock_quantity"],
+            data.get("image_url"), # Optional, can be "None"
+            data.get("average_rating", 0), # Optional, default to 0
+            data.get("review_count", 0),    # Optional, default to 0
+            data.get("is_best_seller", False)  # Optional, default to False (set in database manually for now)
+        ))
+
+    con.commit()
+    new_id = cursor.lastrowid # Get the ID of the newly inserted product
+    cursor.close()
+    con.close()
+
+    return jsonify({
+            "message": "Product added",
+            "product_id": new_id
+        }), 201
+        
+
+# ------------------------------
+# Delete product
+# ------------------------------
+@application.route("/admin/deleteproducts/<int:product_id>", methods=["DELETE"])
+@cross_origin()
+@admin_required
+def delete_product(product_id):
+    con = get_db_connection()
+    cursor = con.cursor() 
+
+    # Check if product exists in order items
+    cursor.execute("""
+        SELECT orderitem_id FROM orderitems
+        WHERE product_id = %s
+    """, (product_id,))
+    order_items = cursor.fetchall()
+
+    #Check if in cartitems too
+    cursor.execute("""
+        SELECT cartitem_id FROM cartitems
+        WHERE product_id = %s
+    """, (product_id,))
+    cart_items = cursor.fetchall()
+
+     # If product is in any order or cart, we should not delete it to preserve integrity
+    if order_items or cart_items:
+        cursor.close()
+        con.close()
+        return jsonify({"error": "Cannot delete product that is in orders or carts"}), 400
+
+    # Else, safe to delete
+    cursor.execute("""
+        DELETE FROM products WHERE product_id = %s
+    """, (product_id,))
 
     con.commit()
     cursor.close()
     con.close()
 
-    return jsonify({"message": "Product added"}), 201
+    return jsonify({"message": "Product deleted"}), 200
+
+# ------------------------------
+# Admin update quantity
+# ------------------------------
+@application.route("/products/quantity", methods=["PUT"])
+@cross_origin()
+@admin_required
+def admin_update_quantity():
+    data = request.json
+    product_id = data["product_id"]
+    new_quantity = data["new_quantity"]
+
+    con = get_db_connection()
+    cursor = con.cursor()
+
+    cursor.execute("""
+        UPDATE products
+        SET stock_quantity = %s
+        WHERE product_id = %s
+    """, (new_quantity, product_id))
+
+    con.commit()
+    cursor.close()
+    con.close()
+
+    return jsonify({"message": "Stock quantity updated"}), 200
+
+# ------------------------------
+# Delete review for a product (auth required)
+# ------------------------------
+@application.route("/products/<int:product_id>/reviews", methods=["DELETE"])
+@cross_origin()
+@admin_required
+def delete_review(product_id):
+    user_id = request.user_id
+
+    con = get_db_connection()
+    cursor = con.cursor()
+
+    cursor.execute("""
+        DELETE FROM reviews
+        WHERE product_id = %s AND user_id = %s
+    """, (product_id, user_id))
+
+    if cursor.rowcount == 0:
+        cursor.close()
+        con.close()
+        return jsonify({"error": "Review not found"}), 404
+
+    con.commit()
+    cursor.close()
+    con.close()
+
+    return jsonify({"message": "Review deleted"}), 200
 
 
 # ===============================

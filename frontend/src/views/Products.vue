@@ -52,7 +52,6 @@ function addToCart(product) {
 }
 
 function goToProduct(id) {
-  console.log(`Navigating to product, id: ${id}`)
   router.push(`/product/${id}`)
 }
 </script>

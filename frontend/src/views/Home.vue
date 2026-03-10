@@ -12,7 +12,7 @@
     <!-- Products Section -->
     <section class="products">
       <div class="container">
-        <h2 class="section-title">Our Best Sellers</h2>
+        <h2 class="section-title">Our Best Sellers Test</h2>
         <div class="product-grid">
           <div v-for="product in products" :key="product.product_id" class="product-card" @click="goToProduct(product.product_id)">
             <img :src="product.image_url" :alt="product.name" class="product-image">
@@ -39,7 +39,7 @@ export default {
     const router = useRouter()
 
     onMounted(async () => {
-      const response = await api.get('/products')
+      const response = await api.get('/api/products/bestSellers')
       products.value = response.data
     })
 
@@ -48,7 +48,6 @@ export default {
     }
 
     function goToProduct(id) {
-      console.log(`Navigating to product, id: ${id}`)
       router.push(`/product/${id}`)
     }
 
