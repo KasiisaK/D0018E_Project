@@ -175,6 +175,8 @@ def login():
     if not user or not bcrypt.check_password_hash(user["password_hash"], password):
         return jsonify({"error": "Invalid credentials"}), 401
 
+    print("DEBUG user from DB:", user)   
+
     token = jwt.encode({
         "user_id": user["user_id"],
         "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=24)
@@ -183,7 +185,8 @@ def login():
     return jsonify({
         "user": {
             "id": user["user_id"],
-            "username": user["username"]
+            "username": user["username"],
+            "isAdmin": user["is_admin"]
         },
         "token": token
     })
@@ -202,7 +205,7 @@ def get_current_user():
     cursor = con.cursor(dictionary=True)
 
     cursor.execute(
-        "SELECT user_id, username FROM users WHERE user_id = %s",
+        "SELECT user_id, username, is_admin FROM users WHERE user_id = %s",
         (user_id,)
     )
     user = cursor.fetchone()
@@ -274,6 +277,37 @@ def get_best_sellers():
 
     return jsonify(products)
 
+# -----------------------------
+# set best sellers
+# -----------------------------
+@application.route("/admin/products/<int:product_id>/best-seller", methods=["PATCH"])
+@cross_origin()
+@admin_required
+def toggle_best_seller(product_id):
+    data = request.json
+    is_best_seller = data.get("is_best_seller")
+
+    if not isinstance(is_best_seller, bool):
+        return jsonify({"error": "is_best_seller must be a boolean"}), 400
+
+    con = get_db_connection()
+    cursor = con.cursor()
+    cursor.execute("""
+        UPDATE products
+        SET is_best_seller = %s
+        WHERE product_id = %s
+    """, (is_best_seller, product_id))
+
+    if cursor.rowcount == 0:
+        cursor.close()
+        con.close()
+        return jsonify({"error": "Product not found"}), 404
+
+    con.commit()
+    cursor.close()
+    con.close()
+    return jsonify({"message": "Best seller status updated"}), 200
+
 # ------------------------------
 # Get single product by ID
 # ------------------------------
@@ -340,6 +374,72 @@ def get_product_reviews(product_id):
     con.close()
 
     return jsonify(reviews)
+
+# ------------------------------
+# User delete comment
+# ------------------------------
+@application.route("/products/<int:product_id>/reviews", methods=["DELETE"])
+@cross_origin()
+@token_required
+def delete_own_review(product_id):
+    user_id = request.user_id
+
+    con = get_db_connection()
+    cursor = con.cursor()
+
+    cursor.execute("""
+        DELETE FROM reviews
+        WHERE product_id = %s AND user_id = %s
+    """, (product_id, user_id))
+
+    if cursor.rowcount == 0:
+        cursor.close()
+        con.close()
+        return jsonify({"error": "Review not found"}), 404
+
+    con.commit()
+    cursor.close()
+    con.close()
+    return jsonify({"message": "Review deleted"}), 200
+
+# ------------------------------
+# Update review for a product
+# ------------------------------
+@application.route("/products/<int:product_id>/reviews", methods=["PUT"])
+@cross_origin()
+@token_required
+def update_review(product_id):
+    user_id = request.user_id
+    data = request.json
+    rating = data.get("rating")
+    comment = data.get("comment")
+
+    if not rating or not (1 <= rating <= 5):
+        return jsonify({"error": "Rating must be between 1 and 5"}), 400
+
+    con = get_db_connection()
+    cursor = con.cursor()
+
+    # Check if review exists and belongs to user
+    cursor.execute("""
+        SELECT review_id FROM reviews
+        WHERE product_id = %s AND user_id = %s
+    """, (product_id, user_id))
+    if not cursor.fetchone():
+        cursor.close()
+        con.close()
+        return jsonify({"error": "Review not found or not owned by you"}), 404
+
+    cursor.execute("""
+        UPDATE reviews
+        SET rating = %s, comment = %s
+        WHERE product_id = %s AND user_id = %s
+    """, (rating, comment, product_id, user_id))
+
+    con.commit()
+    cursor.close()
+    con.close()
+    return jsonify({"message": "Review updated"}), 200
 
 
 # ------------------------------
@@ -686,29 +786,20 @@ def admin_update_quantity():
 # ------------------------------
 # Delete review for a product (auth required)
 # ------------------------------
-@application.route("/products/<int:product_id>/reviews", methods=["DELETE"])
+@application.route("/admin/reviews/<int:review_id>", methods=["DELETE"])
 @cross_origin()
 @admin_required
-def delete_review(product_id):
-    user_id = request.user_id
-
+def admin_delete_review(review_id):
     con = get_db_connection()
     cursor = con.cursor()
-
-    cursor.execute("""
-        DELETE FROM reviews
-        WHERE product_id = %s AND user_id = %s
-    """, (product_id, user_id))
-
+    cursor.execute("DELETE FROM reviews WHERE review_id = %s", (review_id,))
     if cursor.rowcount == 0:
         cursor.close()
         con.close()
         return jsonify({"error": "Review not found"}), 404
-
     con.commit()
     cursor.close()
     con.close()
-
     return jsonify({"message": "Review deleted"}), 200
 
 

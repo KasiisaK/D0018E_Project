@@ -36,9 +36,9 @@
         <p class="comment-text">{{ review.comment || '(No comment)' }}</p>
 
         <!-- If this is the user's own review, show edit/delete buttons -->
-        <div v-if="review.isOwn" class="own-comment-actions">
-          <button @click="startEdit(review)" class="edit-btn">Edit</button>
-          <button @click="deleteReview" class="delete-btn">Delete</button>
+        <div v-if="review.isOwn || authStore.user?.isAdmin" class="own-comment-actions">
+          <button @click="startEdit(review)" v-if="review.isOwn" class="edit-btn">Edit</button>
+          <button @click="deleteReview(review)" class="delete-btn">Delete</button>
         </div>
       </div>
     </div>
@@ -245,11 +245,18 @@ const updateReview = async () => {
 }
 
 // Delete the user's review
-const deleteReview = async () => {
-  if (!confirm('Are you sure you want to delete your review?')) return
+const deleteReview = async (review) => {
+  if (!confirm('Are you sure you want to delete this review?')) return
+
   submitting.value = true
   try {
-    await api.delete(`/products/${props.productId}/reviews`)
+    // If user is admin, use admin endpoint (with review_id)
+    if (authStore.user?.isAdmin) {
+      await api.delete(`/admin/reviews/${review.review_id}`)
+    } else {
+      // Otherwise, use the regular user endpoint (deletes own review)
+      await api.delete(`/products/${props.productId}/reviews`)
+    }
     await fetchReviews()
     emit('review-deleted')
   } catch (err) {
@@ -310,6 +317,7 @@ onMounted(() => {
 .comment-text {
   margin: 0.5rem 0;
   line-height: 1.5;
+  color: black;
 }
 .own-comment-actions {
   display: flex;
@@ -398,6 +406,7 @@ onMounted(() => {
   background: #f1f1f1;
   border-radius: 4px;
   text-align: center;
+  color: black;
 }
 .no-comments {
   color: #777;

@@ -12,6 +12,10 @@
         <div class="nav-right">
           <template v-if="authStore.isAuthenticated">
             <span class="user-greeting">Hi, {{ authStore.user?.username }}</span>
+            <!-- Admin button – only visible if user is admin -->
+            <button v-if="authStore.isAdmin" @click="showAdminModal = true" class="admin-btn">
+              Admin Panel
+            </button>
             <button @click="logout" class="logout-btn">Logout</button>
           </template>
           <template v-else>
@@ -24,6 +28,12 @@
         </div>
       </div>
     </nav>
+    <!--DEBUGLINE-->
+    <div style="background:yellow;">Admin status: {{ authStore.isAdmin }}</div>
+    
+    <!-- Admin Panel Modal -->
+    <AdminPanel :show="showAdminModal" @close="showAdminModal = false" />
+
     <main class="main-content">
       <router-view />
     </main>
@@ -37,35 +47,53 @@
 </template>
 
 <script setup>
+import { ref, onMounted, watch } from 'vue'
 import { useCartStore } from './stores/cart'
 import { useAuthStore } from './stores/auth'
-import { onMounted, watch } from 'vue' // watch to update cart on login/logout
+import AdminPanel from './components/AdminPanel.vue'  // <-- import the new component
 
 const cartStore = useCartStore()
 const authStore = useAuthStore()
+const showAdminModal = ref(false)  // controls modal visibility
 
 onMounted(async () => {
-  // Initial load: restore user + cart if already logged in
   await authStore.fetchUser()
   if (authStore.isAuthenticated) {
     await cartStore.fetchCart()
   }
 })
 
-// Watch auth stare and update cart icon accordingly
 watch(
   () => authStore.isAuthenticated,
   async (isAuth) => {
     if (isAuth) {
       await cartStore.fetchCart()
     } else {
-      cartStore.items = []  // clear locally
+      cartStore.items = []
     }
   },
-  { immediate: true }  // run once on mount too
+  { immediate: true }
 )
 
 const logout = () => {
   authStore.logout()
 }
 </script>
+
+<style scoped>
+/* Add a style for the admin button */
+.admin-btn {
+  background: #333;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  margin-right: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.admin-btn:hover {
+  background: #555;
+}
+/* existing styles remain */
+</style>

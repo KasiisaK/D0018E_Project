@@ -42,9 +42,10 @@
               <input
                 type="number"
                 min="1"
-                :max=getMaxStock(item.product_id)
-                v-model.number="item.quantity"
-                @change="updateQuantityWithCheck(item)"
+                :max="getMaxStock(item.product_id) ?? 9999"
+                :value="item.quantity"
+                @input="handleQuantityInput(item, $event)"
+                @change="handleQuantityChange(item)"
                 class="quantity-input"
               >
             </td>
@@ -124,15 +125,34 @@ onMounted(async () => {
 
 // Used to set max limit on quantity input based on product stock
 function getMaxStock(productId) {
-  return products.value.find(p => p.product_id === productId)
+  const product = products.value.find(p => p.product_id === productId)
+  // If the product has a numeric stock property, return it; otherwise null (no limit)
+  return product && typeof product.stock === 'number' ? product.stock : null
 }
 
-async function updateQuantityWithCheck(item) {
-  const max = getMaxStock(item.product_id)
-  if (item.quantity > max) {
-    item.quantity = max
-    alert(`Only ${max} available in stock!`)
+function handleQuantityInput(item, event) {
+  let newQty = parseInt(event.target.value, 10)
+
+  // 1. Always enforce minimum 1
+  if (isNaN(newQty) || newQty < 1) {
+    newQty = 1
   }
+
+  // 2. Enforce maximum stock only if we have a positive limit
+  const maxStock = getMaxStock(item.product_id)
+  if (maxStock !== null && maxStock > 0 && newQty > maxStock) {
+    newQty = maxStock
+    alert(`Only ${maxStock} available in stock!`)
+  }
+
+  // 3. Update the local item quantity (reactively)
+  if (item.quantity !== newQty) {
+    item.quantity = newQty
+  }
+}
+
+// Called when input loses focus – syncs with the backend
+async function handleQuantityChange(item) {
   await cartStore.updateQuantity(item.product_id, item.quantity)
 }
 
