@@ -134,8 +134,8 @@ def register_user():
     cursor = con.cursor()
 
     cursor.execute(
-        "INSERT INTO users (username, password_hash) VALUES (%s, %s)",
-        (username, hashed_pw)
+        "INSERT INTO users (username, password_hash, is_admin) VALUES (%s, %s, %s)",
+        (username, hashed_pw, 0)
     )
 
     user_id = cursor.lastrowid
