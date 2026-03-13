@@ -95,6 +95,7 @@ def admin_required(f):
         con = get_db_connection()
         cursor = con.cursor(dictionary=True)
         
+        # If a user hase the is_admin flag set 1 they are an admin
         cursor.execute(
             "SELECT is_admin FROM users WHERE user_id = %s",
             (user_id,)
@@ -627,14 +628,14 @@ def delete_product(product_id):
 
     # Check if product exists in order items
     cursor.execute("""
-        SELECT orderitem_id FROM orderitems
+        SELECT order_item_id FROM orderitems
         WHERE product_id = %s
     """, (product_id,))
     order_items = cursor.fetchall()
 
     #Check if in cartitems too
     cursor.execute("""
-        SELECT cartitem_id FROM cartitems
+        SELECT cart_item_id FROM cartitems
         WHERE product_id = %s
     """, (product_id,))
     cart_items = cursor.fetchall()
