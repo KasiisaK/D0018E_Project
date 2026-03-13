@@ -1,0 +1,5 @@
+Fixa adminpanel
+order items display
+delete option
+
+Skriva rapport
