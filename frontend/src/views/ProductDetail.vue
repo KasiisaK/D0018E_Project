@@ -10,35 +10,37 @@
       </div>
     </div>
 
-    <!-- Loading / error states -->
+    <!-- Loading State -->
     <div v-if="loading" class="container text-center" style="padding: 100px 20px;">
       <p>Loading product details...</p>
     </div>
+
+    <!-- Error State -->
     <div v-else-if="error" class="container text-center" style="padding: 100px 20px; color: #e74c3c;">
       <h2>Error</h2>
       <p>{{ error }}</p>
       <router-link to="/products">Back to Shop</router-link>
     </div>
 
-    <!-- Product Detail (only when product is loaded) -->
+    <!-- Product Detail Content -->
     <section v-else-if="product" class="product-detail">
       <div class="container">
         <div class="product-detail-grid">
-          <!-- Left: Images -->
+          <!-- Left Column: Images -->
           <div class="product-images">
             <div class="main-image">
               <img :src="product.image_url" :alt="product.name">
             </div>
           </div>
 
-          <!-- Right: Product info -->
+          <!-- Right Column: Product Info -->
           <div class="product-info">
             <h1 class="product-title">{{ product.name }}</h1>
             <p class="product-price-detail">
               € {{ Number(product.price)?.toFixed(2) || '0.00' }}
             </p>
 
-            <!-- Star rating (average) -->
+            <!-- Star Rating -->
             <div class="product-rating">
               <i v-for="star in fullStars" :key="'full'+star" class="fas fa-star"></i>
               <i v-if="hasHalfStar" class="fas fa-star-half-alt"></i>
@@ -51,6 +53,7 @@
               {{ product.description || 'No description available.' }}
             </p>
 
+            <!-- Add to Cart Controls -->
             <div class="product-actions">
               <div class="quantity-selector">
                 <label for="quantity">Quantity:</label>
@@ -69,7 +72,7 @@
           </div>
         </div>
 
-        <!-- Reviews component -->
+        <!-- Reviews Component -->
         <ProductComments
           :productId="product.product_id"
           @review-submitted="refreshProduct"
@@ -79,7 +82,7 @@
       </div>
     </section>
 
-    <!-- Fallback if product is null but no error (shouldn't happen) -->
+    <!-- Fallback: Product Not Found -->
     <div v-else class="container text-center" style="padding: 100px 20px;">
       <p>Product not found.</p>
       <router-link to="/products">Back to Shop</router-link>
@@ -102,6 +105,7 @@ const loading = ref(true)
 const error = ref(null)
 const quantity = ref(1)
 
+// Fetch product on mount
 onMounted(async () => {
   const id = route.params.id
 
@@ -112,10 +116,8 @@ onMounted(async () => {
   }
 
   try {
-    console.log(`Fetching product with ID: ${id}`)
     const response = await api.get(`/product/${id}`)
 
-    console.log('API response:', response.data)
     if (!response.data) {
       error.value = 'Product not found'
       product.value = null
@@ -123,18 +125,19 @@ onMounted(async () => {
       product.value = response.data
     }
   } catch (err) {
-    console.error('Failed to load product:', err)
     error.value = err.response?.data?.message || 'Could not load product details'
   } finally {
     loading.value = false
   }
 })
 
+// Add product to cart
 function addToCart() {
   if (!product.value) return
   cartStore.addToCart(product.value.product_id, quantity.value)
 }
 
+// Refresh product data after review changes
 const refreshProduct = async () => {
   const id = route.params.id
   try {
@@ -145,6 +148,7 @@ const refreshProduct = async () => {
   }
 }
 
+// Star rating helpers
 const fullStars   = computed(() => Math.floor(Number(product.value?.average_rating || 0)))
 const hasHalfStar = computed(() => Number(product.value?.average_rating || 0) % 1 >= 0.5)
 const emptyStars  = computed(() => 5 - Math.ceil(Number(product.value?.average_rating || 0)))

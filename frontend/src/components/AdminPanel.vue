@@ -83,7 +83,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import api from '../api'
 
 const props = defineProps({
@@ -117,8 +117,12 @@ onMounted(() => {
   }
 })
 
-// Watch for tab change to load products if needed
-// (you could also load on click)
+// Watch for tab changes
+watch(activeTab, (newTab) => {
+  if (newTab === 'manage') {
+    loadProducts()
+  }
+})
 
 async function loadProducts() {
   loading.value = true
@@ -216,7 +220,7 @@ function close() {
   z-index: 1000;
 }
 .modal-content {
-  background: white;
+  background: #181a1b;
   border-radius: 8px;
   width: 90%;
   max-width: 1000px;
@@ -244,6 +248,7 @@ header {
   margin-bottom: 1rem;
 }
 .tabs button {
+  color: white;
   padding: 0.5rem 1rem;
   background: none;
   border: none;
@@ -265,19 +270,24 @@ header {
   font-weight: bold;
   margin-bottom: 0.25rem;
 }
-.form-group input[type="text"],
-.form-group input[type="number"],
+.form-group input,
 .form-group textarea {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #ccc;
+  border: 1px solid #575569;
   border-radius: 4px;
+  background-color: #2b2a33;
+  color: white;
 }
-.form-group.checkbox label {
+.form-group.checkbox input[type="checkbox"] {
+  width: auto;
+  margin-right: 0.5rem; 
+  background-color: transparent; 
+}
+.form-group.checkbox {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: normal;
+  margin-top: 0.5rem;
 }
 button[type="submit"] {
   background: #4caf50;
@@ -302,7 +312,7 @@ button[type="submit"]:disabled {
   text-align: left;
 }
 .product-table th {
-  background: #f4f4f4;
+  background: #5b8697;
 }
 .product-table input[type="number"] {
   width: 80px;

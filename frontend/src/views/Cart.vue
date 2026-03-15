@@ -1,18 +1,19 @@
 <template>
   <div class="container">
+    <!-- Breadcrumb -->
     <div class="breadcrumb">
       <router-link to="/">Home</router-link> / <span>Cart</span>
     </div>
 
     <h1 class="section-title">Your Cart</h1>
 
-    <!-- EMPTY CART -->
+    <!-- Empty Cart State -->
     <div v-if="cartStore.items.length === 0" class="empty-cart">
       <p>Your cart is empty.</p>
       <router-link to="/products" class="btn">Continue Shopping</router-link>
     </div>
 
-    <!-- CART CONTENT -->
+    <!-- Cart Content -->
     <div v-else class="cart-content">
       <table class="cart-table">
         <thead>
@@ -66,7 +67,7 @@
         </tbody>
       </table>
 
-      <!-- SUMMARY -->
+      <!-- Order Summary -->
       <div class="cart-summary">
         <h3>Order Summary</h3>
 
@@ -85,14 +86,24 @@
           <span>${{ cartStore.totalPrice.toFixed(2) }}</span>
         </div>
 
-        <button class="btn order-btn" @click="fakeOrder">
+        <button class="btn order-btn" @click="placeOrder">
           Place Order
         </button>
 
-        <p class="fake-note">(fake, no actual order will be placed)</p>
+        <!-- Demo mode note – will be replaced by receipt modal -->
+        <p class="fake-note">(Demo mode: no actual payment)</p>
       </div>
     </div>
   </div>
+
+  <!-- Order Receipt Modal -->
+  <OrderReceipt
+    :show="showReceipt"
+    :orderId="lastOrder.orderId"
+    :items="lastOrder.items"
+    :total="lastOrder.total"
+    @close="showReceipt = false"
+  />
 </template>
 
 <script setup>
@@ -100,6 +111,7 @@ import { ref, onMounted } from 'vue'
 import { useCartStore } from '../stores/cart'
 import { useAuthStore } from '../stores/auth'
 import api from '../api/index'
+import OrderReceipt from '../components/OrderReceipt.vue'
 
 const cartStore = useCartStore()
 const authStore = useAuthStore()
@@ -107,75 +119,94 @@ const authStore = useAuthStore()
 const products = ref([])
 const loading = ref(true)
 
+// Receipt modal state
+const showReceipt = ref(false)
+const lastOrder = ref({
+  orderId: null,
+  items: [],
+  total: 0
+})
+
+// Load product catalog once for stock validation
 onMounted(async () => {
-  // Load products once (for stock lookup)
   try {
     const res = await api.get('/products')
     products.value = res.data
   } catch (err) {
-    console.error('Failed to load products for stock check:', err)
+    // Silently fail – stock check will simply have no limit
   }
 
-  // Load cart if logged in
+  // Load cart if user is logged in
   if (authStore.isAuthenticated) {
     await cartStore.fetchCart()
   }
   loading.value = false
 })
 
-// Used to set max limit on quantity input based on product stock
+// Get maximum allowed quantity from product stock
 function getMaxStock(productId) {
   const product = products.value.find(p => p.product_id === productId)
-  // If the product has a numeric stock property, return it; otherwise null (no limit)
   return product && typeof product.stock === 'number' ? product.stock : null
 }
 
+// Handle quantity input changes (client-side validation)
 function handleQuantityInput(item, event) {
   let newQty = parseInt(event.target.value, 10)
 
-  // 1. Always enforce minimum 1
+  // Enforce minimum 1
   if (isNaN(newQty) || newQty < 1) {
     newQty = 1
   }
 
-  // 2. Enforce maximum stock only if we have a positive limit
+  // Enforce stock limit if available
   const maxStock = getMaxStock(item.product_id)
   if (maxStock !== null && maxStock > 0 && newQty > maxStock) {
     newQty = maxStock
     alert(`Only ${maxStock} available in stock!`)
   }
 
-  // 3. Update the local item quantity (reactively)
+  // Update local quantity only if changed
   if (item.quantity !== newQty) {
     item.quantity = newQty
   }
 }
 
-// Called when input loses focus – syncs with the backend
+// Sync quantity with backend when input loses focus
 async function handleQuantityChange(item) {
   await cartStore.updateQuantity(item.product_id, item.quantity)
 }
 
+// Remove item from cart
 async function removeItemFromList(item) {
   await cartStore.removeItem(item.product_id)
 }
 
-// Place order (unchanged)
-async function fakeOrder() {
+// Place order – show receipt on success
+async function placeOrder() {
   if (!authStore.isAuthenticated) {
     alert('Please log in to place an order')
     return
   }
+
+  // Snapshot current cart before clearing
+  const orderedItems = cartStore.items.map(item => ({ ...item }))
+  const orderTotal = cartStore.totalPrice
+
   try {
-    await cartStore.createOrder()
-    alert(`Order placed successfully! (fake, no actual order created)`)
+    const orderId = await cartStore.createOrder()  // this clears cart store
+    // Show receipt modal with order details
+    lastOrder.value = {
+      orderId,
+      items: orderedItems,
+      total: orderTotal
+    }
+    showReceipt.value = true
   } catch (err) {
     alert('Failed to place order')
     console.error(err)
   }
 }
 </script>
-
 
 <style scoped>
 .cart-table {

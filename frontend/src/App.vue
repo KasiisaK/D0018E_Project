@@ -12,9 +12,8 @@
         <div class="nav-right">
           <template v-if="authStore.isAuthenticated">
             <span class="user-greeting">Hi, {{ authStore.user?.username }}</span>
-            <!-- Admin button – only visible if user is admin -->
             <button v-if="authStore.isAdmin" @click="showAdminModal = true" class="admin-btn">
-              Admin Panel
+              Products
             </button>
             <button @click="logout" class="logout-btn">Logout</button>
           </template>
@@ -28,10 +27,7 @@
         </div>
       </div>
     </nav>
-    <!--DEBUGLINE-->
-    <div style="background:yellow;">Admin status: {{ authStore.isAdmin }}</div>
-    
-    <!-- Admin Panel Modal -->
+
     <AdminPanel :show="showAdminModal" @close="showAdminModal = false" />
 
     <main class="main-content">
@@ -50,11 +46,11 @@
 import { ref, onMounted, watch } from 'vue'
 import { useCartStore } from './stores/cart'
 import { useAuthStore } from './stores/auth'
-import AdminPanel from './components/AdminPanel.vue'  // <-- import the new component
+import AdminPanel from './components/AdminPanel.vue'
 
 const cartStore = useCartStore()
 const authStore = useAuthStore()
-const showAdminModal = ref(false)  // controls modal visibility
+const showAdminModal = ref(false)
 
 onMounted(async () => {
   await authStore.fetchUser()
@@ -81,7 +77,6 @@ const logout = () => {
 </script>
 
 <style scoped>
-/* Add a style for the admin button */
 .admin-btn {
   background: #333;
   color: white;
@@ -95,5 +90,4 @@ const logout = () => {
 .admin-btn:hover {
   background: #555;
 }
-/* existing styles remain */
 </style>

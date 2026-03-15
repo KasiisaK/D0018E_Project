@@ -283,7 +283,7 @@ onMounted(() => {
   margin: 1.5rem 0;
 }
 .comment-item {
-  background: #f9f9f9;
+  background: #181a1b;
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -300,7 +300,7 @@ onMounted(() => {
 }
 .comment-author {
   font-weight: bold;
-  color: #333;
+  color: #aec2d3;
 }
 .comment-date {
   color: #777;
@@ -317,7 +317,7 @@ onMounted(() => {
 .comment-text {
   margin: 0.5rem 0;
   line-height: 1.5;
-  color: black;
+  color: white;
 }
 .own-comment-actions {
   display: flex;
@@ -386,6 +386,7 @@ onMounted(() => {
   cursor: not-allowed;
 }
 .edit-form {
+  color: #14141a;
   background: #fff3cd;
   padding: 1rem;
   border-radius: 8px;

@@ -1,5 +1,7 @@
-Fixa adminpanel
-order items display
-delete option
+D Fixa adminpanel
+D order items display
+D delete option
 
-Skriva rapport
+D update css (non dark reader but still darkmode :)
+
+X Skriva rapport
