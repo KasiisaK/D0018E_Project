@@ -283,7 +283,7 @@ onMounted(() => {
   margin: 1.5rem 0;
 }
 .comment-item {
-  background: #181a1b;
+  background: #2b2a33;
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1rem;
