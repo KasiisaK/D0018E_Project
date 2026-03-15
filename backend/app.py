@@ -23,8 +23,11 @@
 # /cart/remove - Remove item from cart
 # === ORDERS (AUTH REQUIRED) ===
 # /orders/create - Create order from cart (will also clear cart and update stock)
-# === ADMIN ===
-# /admin/products/add - Add new product (no auth for simplicity, but should be protected in real app)
+# === ADMIN (ADMIN AUTH REQUIRED)===
+# /admin/products/add - Add new product 
+# /admin/deleteproducts/<id> - Delete product
+# /products/quantity - Admin update quantity for a product
+# /admin/reviews/<id> - Delete review for a product (auth required)
 
 
 import os
@@ -43,6 +46,7 @@ from functools import wraps
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
+# Chages to say where the images are stored
 application = Flask(
     __name__,
     static_folder='static',          # physical folder
@@ -53,7 +57,7 @@ CORS(application)
 bcrypt = Bcrypt(application)
 
 # ===============================
-# TOKEN DECORATOR
+# USER TOKEN DECORATOR
 # ===============================
 
 def token_required(f):
@@ -83,7 +87,7 @@ def token_required(f):
     return decorated
 
 # ===============================
-# ADMIN DECORATOR
+# ADMIN TOKEN DECORATOR
 # ===============================
 
 def admin_required(f):
@@ -112,6 +116,10 @@ def admin_required(f):
     
     return decorated
 
+
+
+
+
 # ===============================
 # USER AUTH ENDPOINTS (AUTH REQUIRED)
 # ===============================
@@ -134,8 +142,8 @@ def register_user():
     cursor = con.cursor()
 
     cursor.execute(
-        "INSERT INTO users (username, password_hash) VALUES (%s, %s)",
-        (username, hashed_pw)
+        "INSERT INTO users (username, password_hash, is_admin) VALUES (%s, %s, %s)",
+        (username, hashed_pw, 0)
     )
 
     user_id = cursor.lastrowid
@@ -191,7 +199,6 @@ def login():
         "token": token
     })
 
-
 # ------------------------------
 # Get current user info
 # ------------------------------
@@ -240,6 +247,8 @@ def get_user_purchases():
     con.close()
 
     return jsonify({"purchases": purchases})
+
+
 
 
 # ===============================
@@ -347,6 +356,9 @@ def get_product(product_id):
 
     return jsonify(product)
 
+
+
+
 # ==============================
 # REVIEWS (AUTH REQUIRED for POSTING reviews)
 # ==============================
@@ -440,7 +452,6 @@ def update_review(product_id):
     cursor.close()
     con.close()
     return jsonify({"message": "Review updated"}), 200
-
 
 # ------------------------------
 # Create new review for a product (auth required, 1 review per user per product)
@@ -607,6 +618,8 @@ def remove_from_cart():
     return jsonify({"message": "Item removed from cart"})
 
 
+
+
 # ===============================
 # ORDERS (AUTH REQUIRED)
 # ===============================
@@ -658,6 +671,14 @@ def create_order():
             item['price']
         ))
 
+    # Update stock quantity for each product
+    for item in cart_items:
+        cursor.execute("""
+            UPDATE products
+            SET stock_quantity = stock_quantity - %s
+            WHERE product_id = %s
+        """, (item['quantity'], item['product_id']))
+
     # Clear cart
     cursor.execute("""
         DELETE FROM cartitems WHERE user_id = %s
@@ -674,6 +695,7 @@ def create_order():
 
 
 
+
 # ===============================
 # ADMIN (ADMIN AUTH REQUIRED)
 # ===============================
@@ -681,7 +703,6 @@ def create_order():
 # ------------------------------
 # Add new product 
 # ------------------------------
-
 @application.route("/admin/products/add", methods=["POST"])
 @cross_origin()
 @admin_required
@@ -714,8 +735,7 @@ def add_product():
             "message": "Product added",
             "product_id": new_id
         }), 201
-        
-
+ 
 # ------------------------------
 # Delete product
 # ------------------------------
@@ -803,10 +823,11 @@ def admin_delete_review(review_id):
     return jsonify({"message": "Review deleted"}), 200
 
 
+
+
 # ===============================
 # SERVE VUE SPA
 # ===============================
-
 @application.route("/", defaults={"path": ""})
 @application.route("/<path:path>")
 def serve_vue(path):
