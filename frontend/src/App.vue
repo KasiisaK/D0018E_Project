@@ -2,7 +2,7 @@
   <div id="app" class="app-wrapper">
     <nav class="navbar">
       <div class="container">
-        <router-link to="/" class="logo">bigMug</router-link>
+        <router-link to="/" class="logo">BigMug</router-link>
         <div class="nav-links">
           <router-link to="/">Home</router-link>
           <router-link to="/products">Shop</router-link>

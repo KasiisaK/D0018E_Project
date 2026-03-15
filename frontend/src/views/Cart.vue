@@ -236,14 +236,16 @@ async function placeOrder() {
 .product-info {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 16px;
+  min-height: 90px;
 }
 
 .cart-product-image {
-  width: 60px;
-  height: 60px;
+  width: 110px;
+  height: 110px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .quantity-input {

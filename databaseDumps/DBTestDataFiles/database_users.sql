@@ -1,8 +1,8 @@
 -- MySQL dump 10.13  Distrib 8.0.45, for Win64 (x86_64)
 --
--- Host: localhost    Database: database
+-- Host: database-d0018e.cd4i4u2a61ag.eu-north-1.rds.amazonaws.com    Database: database
 -- ------------------------------------------------------
--- Server version	8.0.45
+-- Server version	8.4.7
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -14,26 +14,25 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+SET @MYSQLDUMP_TEMP_LOG_BIN = @@SESSION.SQL_LOG_BIN;
+SET @@SESSION.SQL_LOG_BIN= 0;
 
 --
--- Table structure for table `products`
+-- GTID state at the beginning of the backup 
 --
 
-DROP TABLE IF EXISTS `products`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `products` (
-  `product_id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) NOT NULL,
-  `description` text,
-  `price` decimal(10,2) NOT NULL,
-  `stock_quantity` int NOT NULL,
-  `image_url` varchar(255) DEFAULT NULL,
-  `average_rating` decimal(3,2) DEFAULT '0.00' COMMENT 'Average rating from 0.00 to 5.00',
-  `review_count` int DEFAULT '0' COMMENT 'Number of reviews for this product',
-  PRIMARY KEY (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '';
+
+--
+-- Dumping data for table `users`
+--
+
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES (3,'a','$2b$12$uNeuJ9VYOkp7/edI2clqveK2Iwn6SQGZ/mLmmoWCbSPhYb2rnOuie','2026-03-02 15:07:32',0),(4,'b','$2b$12$Cr8O5yr9pi9.lBqSWB/XteGpr/Rytl.5W3ibtURFWaPSBw2ztTKAu','2026-03-02 15:35:04',0),(11,'eric','$2b$12$9YMpzoVdWQ9Z5AyTZx/hMusou5ntdr.l/QKd4G0JnheohFhzTPSz.','2026-03-06 07:35:22',0),(12,'admin','$2b$12$MkiTxms3w5KM9M6g1YLT5eHMmy5H6CPXCjtADPkgRZSkgiuk/WTUm','2026-03-10 17:56:03',1),(14,'new','$2b$12$6KkM3Y5GYf/Yy.RnAqHdeOuRjet0Lq8g3CYUExZMxH/lrBZ2tInom','2026-03-15 18:42:23',0);
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
+UNLOCK TABLES;
+SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -44,4 +43,4 @@ CREATE TABLE `products` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-02 19:23:30
+-- Dump completed on 2026-03-15 19:58:56
