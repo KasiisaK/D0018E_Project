@@ -221,7 +221,8 @@ async function placeOrder() {
 .cart-item-controls {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 16px;
+  min-height: 90px;
 }
 
 .quantity-wrapper {

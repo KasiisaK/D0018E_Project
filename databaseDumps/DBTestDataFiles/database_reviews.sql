@@ -1,8 +1,8 @@
 -- MySQL dump 10.13  Distrib 8.0.45, for Win64 (x86_64)
 --
--- Host: localhost    Database: database
+-- Host: database-d0018e.cd4i4u2a61ag.eu-north-1.rds.amazonaws.com    Database: database
 -- ------------------------------------------------------
--- Server version	8.0.45
+-- Server version	8.4.7
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -14,16 +14,25 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+SET @MYSQLDUMP_TEMP_LOG_BIN = @@SESSION.SQL_LOG_BIN;
+SET @@SESSION.SQL_LOG_BIN= 0;
 
 --
--- Dumping data for table `orderitems`
+-- GTID state at the beginning of the backup 
 --
 
-LOCK TABLES `orderitems` WRITE;
-/*!40000 ALTER TABLE `orderitems` DISABLE KEYS */;
-INSERT INTO `orderitems` VALUES (3,2,12,1,5.99),(4,2,14,1,6.99),(5,2,15,7,6.99),(6,3,12,2,5.99),(7,3,14,1,6.99),(8,10,12,6,5.99),(9,10,14,3,6.99),(10,10,15,1,6.99),(11,11,15,1,6.99),(12,11,19,2,21.99);
-/*!40000 ALTER TABLE `orderitems` ENABLE KEYS */;
+SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '';
+
+--
+-- Dumping data for table `reviews`
+--
+
+LOCK TABLES `reviews` WRITE;
+/*!40000 ALTER TABLE `reviews` DISABLE KEYS */;
+INSERT INTO `reviews` VALUES (9,12,3,4,'I love this product.','2026-03-15 18:39:59'),(10,12,4,1,'Spoon not included, grrr.','2026-03-15 18:41:06'),(11,15,4,3,'IT\'S FINE','2026-03-15 18:41:22'),(12,14,14,5,'Great for me and my amigo.','2026-03-15 18:42:42'),(13,19,12,5,'This is by far the best mug i have ever bought. 5/5','2026-03-15 18:56:16');
+/*!40000 ALTER TABLE `reviews` ENABLE KEYS */;
 UNLOCK TABLES;
+SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -34,4 +43,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-02 19:24:31
+-- Dump completed on 2026-03-15 19:58:56
