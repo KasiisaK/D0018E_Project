@@ -671,6 +671,19 @@ def create_order():
             item['price']
         ))
 
+    # Check if quantity in cart is more than stock
+    for item in cart_items:
+        cursor.execute("""
+            SELECT stock_quantity FROM products
+            WHERE product_id = %s
+        """, (item['product_id'],))
+        stock = cursor.fetchone()['stock_quantity']
+
+        if item['quantity'] > stock:
+            cursor.close()
+            con.close()
+            return jsonify({"message": f"Not enough stock for product ID {item['product_id']}"}), 400
+
     # Update stock quantity for each product
     for item in cart_items:
         cursor.execute("""
